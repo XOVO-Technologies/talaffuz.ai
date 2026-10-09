@@ -15,7 +15,7 @@ Sentence-length clips, Urdu transcripts, Roman Urdu and metadata files, all from
 
 <br><br>
 
-<a href="https://xovo-technologies.github.io/talaffuz.ai/"><img alt="Visit the live guide" src="https://img.shields.io/badge/Visit-the%20live%20guide-4778f3?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+<a href="https://indigo-oryx-391297.hostingersite.com/"><img alt="Visit the live guide" src="https://img.shields.io/badge/Visit-the%20live%20guide-4778f3?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
 <a href="https://colab.research.google.com/github/XOVO-Technologies/talaffuz.ai/blob/main/notebooks/talaffuz_ai.ipynb"><img alt="Open in Google Colab" src="https://img.shields.io/badge/Open%20in-Google%20Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white"></a>
 <a href="#run-it-with-claude-code"><img alt="Run with Claude Code" src="https://img.shields.io/badge/Run%20with-Claude%20Code-D97757?style=for-the-badge&logo=anthropic&logoColor=white"></a>
 <a href="#run-it-with-openai-codex"><img alt="Run with OpenAI Codex" src="https://img.shields.io/badge/Run%20with-OpenAI%20Codex-10A37F?style=for-the-badge&logo=openai&logoColor=white"></a>
@@ -117,7 +117,7 @@ Set this project up on my machine by following the README: run ./setup.ps1, then
 `./setup.ps1` also installs the `romanize` and `validate-dataset` skills into `.agents/skills/`. Restart Codex once after setup, then type `$romanize` or `$validate-dataset` to run them. Codex asks before it runs commands, so approve them as they come.
 
 > [!TIP]
-> The [live guide](https://xovo-technologies.github.io/talaffuz.ai/) has a **Get started** menu that shows these routes step by step, with copy buttons.
+> The [live guide](https://indigo-oryx-391297.hostingersite.com/) has a **Get started** menu that shows these routes step by step, with copy buttons.
 
 ## What computer do you need
 
@@ -528,7 +528,7 @@ Then open <http://127.0.0.1:8000>. The skills and the `urdu-proofreader` agent c
 
 ## The live guide
 
-The `site/` folder is a static guide for the project, published on [GitHub Pages](https://xovo-technologies.github.io/talaffuz.ai/) or Vercel. A **Get started** menu offers Google Colab, Claude Code, OpenAI Codex and Windows PC with step-by-step instructions and copy buttons, and the page lists the output format, every setting, a live GitHub star count and a short FAQ. The app itself always runs on your own machine, so the published site is a guide and nothing is processed on it. A deep link such as `/#run=claude` opens a specific guide.
+The `site/` folder is a static guide for the project, published at [indigo-oryx-391297.hostingersite.com](https://indigo-oryx-391297.hostingersite.com/). It is plain HTML, CSS and JavaScript with no build step, so any web host can serve it. A **Get started** menu offers Google Colab, Claude Code, OpenAI Codex and Windows PC with step-by-step instructions and copy buttons, and the page lists the output format, every setting, a live GitHub star count and a short FAQ. The app itself always runs on your own machine, so the published site is a guide and nothing is processed on it. A deep link such as `/#run=claude` opens a specific guide.
 
 ## For developers
 
@@ -547,7 +547,7 @@ frontend/
   src/components/      settings, uploader, clip table, Roman Urdu panel, export, dialogs
   src/config.ts        repository name for the star button and help links
   src/styles.css       design tokens and styles
-site/                  static guide for GitHub Pages or Vercel
+site/                  static guide, plain HTML with no build step
 notebooks/             the Google Colab notebook
 integrations/          skills and the proofreading agent for Claude Code and Codex (setup.ps1 installs them)
 ```
