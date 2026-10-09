@@ -1,0 +1,26 @@
+# Web API
+fastapi>=0.115
+uvicorn[standard]>=0.30
+
+# Audio (ffmpeg binary is bundled by imageio-ffmpeg, no system install needed)
+numpy
+scipy
+soundfile
+imageio-ffmpeg
+pyloudnorm
+noisereduce
+
+# ML (CPU builds are fine; a GPU is used automatically if torch sees one)
+torch
+torchaudio
+silero-vad
+demucs
+faster-whisper
+
+# Output + Roman Urdu
+openpyxl
+anthropic>=1.0
+
+# Dev
+pytest
+httpx

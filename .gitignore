@@ -1,0 +1,11 @@
+data/
+backend/.venv/
+backend/.env
+__pycache__/
+.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+*.log
+.agents/
+.claude/
+CLAUDE.md

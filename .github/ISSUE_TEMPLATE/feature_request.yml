@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest something that would make the app more useful
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: Describe the situation first. A short example of your recordings or your target dataset format helps.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: How you imagine it working. It is fine if you only have part of an idea.

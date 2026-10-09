@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software to build a dataset, please cite it as below."
+title: "Talaffuz.ai"
+type: software
+version: 0.1.0
+date-released: 2026-10-09
+license: MIT
+repository-code: "https://github.com/XOVO-Technologies/talaffuz.ai"
+url: "https://xovo-technologies.github.io/talaffuz.ai/"
+authors:
+  - name: "XOVO Technologies"
+abstract: >-
+  A local web app that turns long Urdu recordings into a text-to-speech training dataset:
+  sentence-length clips, Urdu transcripts, Roman Urdu and metadata files in a fixed format.
+keywords:
+  - urdu
+  - roman urdu
+  - speech dataset
+  - text-to-speech
+  - whisper

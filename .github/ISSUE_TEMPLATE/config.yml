@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Read the user guide
+    url: https://github.com/XOVO-Technologies/talaffuz.ai#readme
+    about: The README covers setup, every setting, Roman Urdu and common questions.

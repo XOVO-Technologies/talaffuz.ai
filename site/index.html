@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Talaffuz.ai</title>
+    <meta
+      name="description"
+      content="Turn long Urdu recordings into a speech dataset: sentence-length clips, Urdu transcripts, Roman Urdu and metadata files. Run it on Google Colab, with Claude Code, with OpenAI Codex or on a Windows PC."
+    />
+    <meta property="og:title" content="Talaffuz.ai" />
+    <meta property="og:description" content="Turn long Urdu recordings into a training dataset. Run it on Google Colab, with Claude Code, OpenAI Codex or on Windows." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#edf1f5" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="preload" href="assets/fonts/space-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/urbanist-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="wrap wide topbar-in">
+        <a href="https://xovotechnologies.com/" target="_blank" rel="noopener">A contribution by <strong>XOVO Technologies</strong></a>
+      </div>
+    </div>
+    <header class="nav">
+      <div class="wrap wide nav-in">
+        <a class="brand" href="#top" aria-label="Talaffuz.ai, back to top">
+          <span class="logo" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4" /></svg>
+          </span>
+          <span class="brand-name">Talaffuz.ai</span>
+        </a>
+        <nav class="links" aria-label="Page sections">
+          <a href="#run">Run it</a>
+          <a href="#output">What you get</a>
+          <a href="#how">How it works</a>
+          <a href="#settings">Settings</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn sm gh" data-link="repo" target="_blank" rel="noopener noreferrer" title="Star this project on GitHub">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z" /></svg>
+            <span>Star</span>
+            <span class="gh-count" data-stars hidden></span>
+          </a>
+          <div class="menu" id="start-menu">
+            <button class="btn primary sm" type="button" id="start-menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="start-menu-list">
+              <span>Get started</span>
+              <svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+            <div class="menu-list" id="start-menu-list" role="menu" aria-labelledby="start-menu-btn" hidden></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="wrap hero">
+        <div class="hero-copy">
+          <h1>Turn long Urdu recordings into a training dataset</h1>
+          <p class="lead">
+            Drop in your recordings. The app cuts them into sentence-length clips, removes noise and music, transcribes each clip
+            in Urdu, and exports numbered wav files with <code>metadata.csv</code> and <code>metadata.xlsx</code>. It builds
+            datasets only. There is no model training.
+          </p>
+          <div class="cta-row">
+            <a class="btn primary lg" href="#run">Choose where to run it</a>
+            <a class="btn lg gh" data-link="repo" target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z" /></svg>
+              <span>Star on GitHub</span>
+              <span class="gh-count" data-stars hidden></span>
+            </a>
+          </div>
+        </div>
+        <figure class="hero-stage" id="voice-stage" data-phase="speak" role="img" aria-label="Animation: a voice recording turns into moving lines of Urdu text">
+          <span class="stage-cap" aria-hidden="true">
+            <span class="cap cap-speak">Recording</span>
+            <span class="cap cap-write">Urdu transcript</span>
+          </span>
+          <div class="voice" aria-hidden="true"></div>
+          <div class="page" aria-hidden="true"></div>
+          <ul class="lines-src" lang="ur" dir="rtl">
+            <li>ستاروں سے آگے جہاں اور بھی ہیں</li>
+            <li>جیسی کرنی ویسی بھرنی۔</li>
+            <li>ارے بھائی، چائے تو پی کر جاؤ۔</li>
+            <li>ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے</li>
+            <li>چراغ تلے اندھیرا۔</li>
+            <li>گھر پہنچ کر ایک فون ضرور کر دینا۔</li>
+            <li>پتا پتا بوٹا بوٹا حال ہمارا جانے ہے</li>
+            <li>جو گرجتے ہیں وہ برستے نہیں۔</li>
+            <li>آج شام چھت پر بیٹھ کر بارش دیکھیں گے۔</li>
+            <li>عشق نے غالب نکما کر دیا</li>
+            <li>اس شہر کی گلیوں میں میرا بچپن بسا ہے۔</li>
+            <li>دودھ کا دودھ، پانی کا پانی۔</li>
+          </ul>
+        </figure>
+      </section>
+
+      <section class="sec" id="run" aria-labelledby="run-title">
+        <div class="wrap sec-grid">
+          <div class="sec-body">
+            <h2 id="run-title">Where do you want to run it?</h2>
+            <p class="intro">Pick a place from the list. The steps for it appear right below.</p>
+
+            <div class="picker">
+              <span class="picker-label" id="picker-label">Run it on</span>
+              <div class="dd" id="run-dd">
+                <button class="dd-btn" type="button" id="run-dd-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="run-dd-list" aria-labelledby="picker-label run-dd-btn">
+                  <span class="dd-icon" aria-hidden="true"></span>
+                  <span class="dd-text"><strong class="dd-title"></strong><small class="dd-sub"></small></span>
+                  <svg class="caret" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                </button>
+                <ul class="dd-list" id="run-dd-list" role="listbox" tabindex="-1" aria-labelledby="picker-label" hidden>
+                  <li role="option" id="opt-colab" data-run="colab" data-short="No install, free GPU" aria-selected="true">
+                    <span class="dd-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9H7Z" /></svg>
+                    </span>
+                    <span class="dd-text">
+                      <strong>Google Colab</strong>
+                      <small>Nothing to install. A free GPU makes transcription much faster than most laptops.</small>
+                      <em>Needs a Google account</em>
+                    </span>
+                  </li>
+                  <li role="option" id="opt-claude" data-run="claude" data-short="Claude sets it up for you" aria-selected="false">
+                    <span class="dd-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4M12 17h7" /><rect x="2.5" y="3.5" width="19" height="17" rx="3" /></svg>
+                    </span>
+                    <span class="dd-text">
+                      <strong>Claude Code</strong>
+                      <small>Claude sets the project up on your PC, starts it, and writes the Roman Urdu column for you.</small>
+                      <em>Needs Claude Code, uv and Node.js</em>
+                    </span>
+                  </li>
+                  <li role="option" id="opt-codex" data-run="codex" data-short="Codex sets it up for you" aria-selected="false">
+                    <span class="dd-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 6l-3 12" /></svg>
+                    </span>
+                    <span class="dd-text">
+                      <strong>OpenAI Codex</strong>
+                      <small>Codex sets the project up on your PC, starts it, and writes the Roman Urdu column when you ask.</small>
+                      <em>Needs Codex CLI, uv and Node.js</em>
+                    </span>
+                  </li>
+                  <li role="option" id="opt-windows" data-run="windows" data-short="Two scripts on your PC" aria-selected="false">
+                    <span class="dd-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></svg>
+                    </span>
+                    <span class="dd-text">
+                      <strong>Windows PC</strong>
+                      <small>Two scripts and you are running. Best for private recordings and projects you resume over days.</small>
+                      <em>Needs Windows 10 or 11, uv and Node.js</em>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="panel" id="panel-colab" role="region" aria-label="Steps for Google Colab" hidden>
+              <div class="colab-top">
+                <div class="panel-head">
+                  <h3>Run it on Google Colab</h3>
+                  <p>
+                    The notebook installs everything, starts the app and gives you a link to open it. A note above each cell tells you
+                    what it does and what to do next.
+                  </p>
+                </div>
+                <div class="colab-cta">
+                  <a class="btn primary lg" data-link="colab" target="_blank" rel="noopener noreferrer">Open in Colab</a>
+                  <span class="small">Opens the notebook in a new tab.</span>
+                </div>
+              </div>
+              <ul class="facts-grid">
+                <li><strong>No install</strong><span>Everything runs in a browser tab on Google's machine.</span></li>
+                <li><strong>A free GPU</strong><span>Transcription is much faster than on most laptops.</span></li>
+                <li><strong>Saved to Drive</strong><span>Projects live in your Google Drive, so you can resume after a disconnect.</span></li>
+                <li><strong>Guided</strong><span>Run the cells top to bottom. Each one explains itself.</span></li>
+              </ul>
+              <ol class="steps">
+                <li>
+                  <div>
+                    <strong>Open the notebook</strong>
+                    <p>Use the Open in Colab button above. It opens in a new tab and asks you to sign in to Google if you are not already.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Pick a GPU</strong>
+                    <p>In Colab choose Runtime, then Change runtime type, then a GPU. A T4 is enough. Without one the app still works, but each clip takes about 35 seconds.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Run all</strong>
+                    <p>Choose Runtime, then Run all. When Colab asks, allow access to Google Drive so your projects survive the session ending. The first run takes several minutes.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Open the app</strong>
+                    <p>Step 5 of the notebook prints a link. Open it, add your recordings and follow the numbered steps. For big files, use the box named "Add files that are already on this computer" with a Drive path such as <code>/content/drive/MyDrive/recordings</code>.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Download the dataset</strong>
+                    <p>After you press Build dataset in the app, run the last cell of the notebook to download <code>dataset.zip</code>.</p>
+                  </div>
+                </li>
+              </ol>
+              <details class="nb">
+                <summary>What each notebook cell does</summary>
+                <ol>
+                  <li><strong>Check the machine.</strong> Shows whether you have a GPU and how much disk space is free.</li>
+                  <li><strong>Install the app.</strong> Downloads the code, installs the Python packages and builds the web page.</li>
+                  <li><strong>Where to save projects.</strong> Mounts Google Drive, or keeps everything on the Colab machine.</li>
+                  <li><strong>Roman Urdu key.</strong> Optional. Reads an <code>ANTHROPIC_API_KEY</code> secret if you added one.</li>
+                  <li><strong>Start the app.</strong> Starts the server and prints the link to open.</li>
+                  <li><strong>Show the app inside the notebook.</strong> Optional, for people who prefer one tab.</li>
+                  <li><strong>Download the dataset.</strong> Downloads the latest <code>dataset.zip</code>.</li>
+                  <li><strong>Stop the app.</strong> Frees the GPU when you are done.</li>
+                </ol>
+              </details>
+              <p class="note">
+                Free Colab limits how long a GPU session can run and stops idle sessions. A long project may take several sessions, and progress is saved after
+                every clip, so you press Continue each time. For Roman Urdu in Colab, paste an Anthropic API key in the app's Review step, or save it as a Colab
+                secret named <code>ANTHROPIC_API_KEY</code>. You can also type it in the app, or copy the project folder to your own computer later and run <code>/romanize</code> in Claude Code or <code>$romanize</code> in Codex.
+              </p>
+            </div>
+
+            <div class="panel" id="panel-claude" role="region" aria-label="Steps for Claude Code" hidden>
+              <div class="panel-head">
+                <h3>Run it with Claude Code</h3>
+                <p>
+                  Claude Code does the setup for you and, once clips are transcribed, writes the Roman Urdu column with a single command. No
+                  API key is needed.
+                </p>
+              </div>
+              <ol class="steps">
+                <li>
+                  <div>
+                    <strong>Install the tools</strong>
+                    <p>
+                      You need <a href="https://claude.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a>,
+                      <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener noreferrer">uv</a> and
+                      <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">Node.js</a> on a Windows PC, plus Git.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Clone the project</strong>
+                    <div class="cmd">
+                      <pre id="cmd-clone" data-fill>git clone {{cloneUrl}}
+cd {{repoName}}</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-clone">Copy</button>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Start Claude Code in that folder and paste this prompt</strong>
+                    <div class="cmd">
+                      <pre id="cmd-claude">claude</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-claude">Copy</button>
+                    </div>
+                    <div class="cmd prompt">
+                      <pre id="claude-prompt">Set this project up on my machine by following the README: run ./setup.ps1, then start the app with ./start.ps1 and tell me when http://127.0.0.1:8000 is ready. Later I will ask you to run /romanize to write the Roman Urdu column.</pre>
+                      <button class="btn sm" type="button" data-copy="#claude-prompt">Copy prompt</button>
+                    </div>
+                    <p class="small">Not sure how to install something? Open Claude in your browser with the same prompt and ask it to walk you through the install.</p>
+                    <a class="btn" id="open-claude" target="_blank" rel="noopener noreferrer">Open Claude with this prompt</a>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Use the app</strong>
+                    <p>Open <code>http://127.0.0.1:8000</code>, add your recordings and press Start. Transcription runs on your PC.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Write the Roman Urdu</strong>
+                    <p>The setup script installs the <code>/romanize</code> command into the project. Restart Claude Code once so it shows up. When the table has Urdu text, type the command. It fills the empty Roman Urdu cells in one fixed style and never overwrites your edits.</p>
+                    <div class="cmd">
+                      <pre id="cmd-romanize">/romanize</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-romanize">Copy</button>
+                    </div>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <div class="panel" id="panel-codex" role="region" aria-label="Steps for OpenAI Codex" hidden>
+              <div class="panel-head">
+                <h3>Run it with OpenAI Codex</h3>
+                <p>
+                  Codex does the setup for you and, once clips are transcribed, writes the Roman Urdu column when you ask. No API key is
+                  needed.
+                </p>
+              </div>
+              <ol class="steps">
+                <li>
+                  <div>
+                    <strong>Install the tools</strong>
+                    <p>
+                      You need <a href="https://github.com/openai/codex" target="_blank" rel="noopener noreferrer">Codex CLI</a>,
+                      <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener noreferrer">uv</a> and
+                      <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">Node.js</a> on a Windows PC, plus Git.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Clone the project</strong>
+                    <div class="cmd">
+                      <pre id="cmd-clone-3" data-fill>git clone {{cloneUrl}}
+cd {{repoName}}</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-clone-3">Copy</button>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Start Codex in that folder and paste this prompt</strong>
+                    <div class="cmd">
+                      <pre id="cmd-codex">codex</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-codex">Copy</button>
+                    </div>
+                    <div class="cmd prompt">
+                      <pre id="codex-prompt">Set this project up on my machine by following the README: run ./setup.ps1, then start the app with ./start.ps1 and tell me when http://127.0.0.1:8000 is ready. Later I will ask you to romanize the project.</pre>
+                      <button class="btn sm" type="button" data-copy="#codex-prompt">Copy prompt</button>
+                    </div>
+                    <p class="small">Codex asks before it runs commands. Approve them so the setup can finish.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Use the app</strong>
+                    <p>Open <code>http://127.0.0.1:8000</code>, add your recordings and press Start. Transcription runs on your PC.</p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Write the Roman Urdu</strong>
+                    <p>The setup script installs the <code>romanize</code> skill into the project. Restart Codex once so it shows up. When the table has Urdu text, type the command. It fills the empty Roman Urdu cells in one fixed style and never overwrites your edits.</p>
+                    <div class="cmd">
+                      <pre id="cmd-romanize-codex">$romanize</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-romanize-codex">Copy</button>
+                    </div>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <div class="panel" id="panel-windows" role="region" aria-label="Steps for a Windows PC" hidden>
+              <div class="panel-head">
+                <h3>Run it on a Windows PC</h3>
+                <p>Everything runs locally. The first setup downloads the Whisper model, about 1.6 GB, once.</p>
+              </div>
+              <ol class="steps">
+                <li>
+                  <div>
+                    <strong>Install uv and Node.js</strong>
+                    <p>
+                      <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener noreferrer">uv</a> installs Python 3.12 for you.
+                      <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">Node.js</a> 20.19 or newer builds the web page once.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Get the code</strong>
+                    <p>Download the ZIP and unpack it, or clone with Git.</p>
+                    <a class="btn primary" data-link="zip" rel="noopener noreferrer">Download ZIP</a>
+                    <div class="cmd">
+                      <pre id="cmd-clone-2" data-fill>git clone {{cloneUrl}}
+cd {{repoName}}</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-clone-2">Copy</button>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Run the setup</strong>
+                    <p>Open PowerShell in the project folder.</p>
+                    <div class="cmd">
+                      <pre id="cmd-setup">./setup.ps1</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-setup">Copy</button>
+                    </div>
+                    <p class="small">If PowerShell says running scripts is disabled, use this instead:</p>
+                    <div class="cmd">
+                      <pre id="cmd-setup-bypass">powershell -ExecutionPolicy Bypass -File .\setup.ps1</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-setup-bypass">Copy</button>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Start the app</strong>
+                    <p>Run this, or double-click <code>start.bat</code>. The app opens at <code>http://127.0.0.1:8000</code>.</p>
+                    <div class="cmd">
+                      <pre id="cmd-start">./start.ps1</pre>
+                      <button class="btn sm" type="button" data-copy="#cmd-start">Copy</button>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>Follow the five steps in the app</strong>
+                    <p>Settings, recordings, process, review, export. Roman Urdu comes from Claude Code or Codex, from an API key, or from your own typing. The full guide is in the README.</p>
+                    <a class="btn" data-link="guide" target="_blank" rel="noopener noreferrer">Read the user guide</a>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="output" aria-labelledby="output-title">
+        <div class="wrap sec-grid">
+          <div class="sec-body">
+            <h2 id="output-title">A dataset in a fixed format</h2>
+            <div class="two-col">
+              <div class="col-text">
+                <p>
+                  A dataset folder and a spreadsheet with the same rows. A row's wav, Urdu text and Roman Urdu always belong
+                  together, and numbering has no gaps even after you reject clips.
+                </p>
+                <ul class="spec">
+                  <li>Wavs are mono 16-bit PCM at one sample rate, 22,050 Hz by default.</li>
+                  <li>Names are <code>urdu_000001.wav</code>, <code>urdu_000002.wav</code> and so on. Start at any number to continue an existing dataset.</li>
+                  <li><code>metadata.csv</code> is UTF-8 without a byte-order mark, has no header, and separates three fields with <code>|</code>.</li>
+                  <li><code>metadata.xlsx</code> has Filename, Urdu Sentence, Roman Urdu and Final, where Final is a formula that rebuilds the CSV line.</li>
+                  <li>After writing, the app re-reads the files and checks the format before it offers the download.</li>
+                </ul>
+              </div>
+              <div class="code-card">
+                <pre class="tree" dir="ltr">dataset/
+  wavs/
+    urdu_000001.wav
+    urdu_000002.wav
+    urdu_000003.wav
+    ...
+  metadata.csv
+metadata.xlsx</pre>
+                <p class="code-label">One line of metadata.csv</p>
+                <pre class="csv" dir="ltr">urdu_000001.wav|<bdi lang="ur">آج موسم بہت اچھا ہے۔</bdi>|Aaj mausam bohat achha hai.</pre>
+                <p class="code-label">Columns of metadata.xlsx</p>
+                <pre class="csv" dir="ltr">Filename | Urdu Sentence | Roman Urdu | Final
+Final = A2&amp;"|"&amp;B2&amp;"|"&amp;C2</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="how" aria-labelledby="how-title">
+        <div class="wrap sec-grid">
+          <div class="sec-body">
+            <h2 id="how-title">Five steps for every recording</h2>
+            <p class="intro">Progress is saved after every clip, so you can stop and continue.</p>
+            <ol class="pipeline">
+              <li>
+                <span class="n">1</span>
+                <strong>Cut</strong>
+                <p>Silero VAD finds the speech. Clips are cut at pauses, at the length you choose, so a word is never split in half.</p>
+              </li>
+              <li>
+                <span class="n">2</span>
+                <strong>Clean</strong>
+                <p>Music is removed with Demucs only when the recording has any. Light noise reduction, edge trimming and loudness set to -23 LUFS follow.</p>
+              </li>
+              <li>
+                <span class="n">3</span>
+                <strong>Transcribe</strong>
+                <p>faster-whisper writes the Urdu. Empty, looping and non-speech results are rejected, and doubtful ones are flagged.</p>
+              </li>
+              <li>
+                <span class="n">4</span>
+                <strong>Review</strong>
+                <p>You play each clip, fix the text and untick Keep on bad clips. Roman Urdu is written in one fixed house style.</p>
+              </li>
+              <li>
+                <span class="n">5</span>
+                <strong>Export</strong>
+                <p>Wavs, <code>metadata.csv</code>, <code>metadata.xlsx</code> and a zip, checked after writing.</p>
+              </li>
+            </ol>
+
+            <div class="numbers">
+              <div><b>Up to 1 min</b><span>per clip works well, and the length is your choice</span></div>
+              <div><b>35 s</b><span>per clip of up to 30 s on a laptop CPU, measured with large-v3-turbo</span></div>
+              <div><b>22,050 Hz</b><span>default sample rate</span></div>
+              <div><b>0</b><span>API keys needed</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="settings" aria-labelledby="settings-title">
+        <div class="wrap sec-grid">
+          <div class="sec-body">
+            <h2 id="settings-title">What you can change</h2>
+            <p class="intro">
+              The defaults suit most recordings. Change what you need in the app before you press Start. Settings lock while a job runs.
+            </p>
+
+            <div class="set-grid">
+              <div class="set-group">
+                <h3>File numbering</h3>
+                <dl>
+                  <div class="row">
+                    <dt>First file number</dt>
+                    <dd class="val">1</dd>
+                    <dd class="why">Raise it to continue an existing dataset.</dd>
+                  </div>
+                  <div class="row">
+                    <dt>Last file number <small>(optional)</small></dt>
+                    <dd class="val">No limit</dd>
+                    <dd class="why">Empty keeps every good clip. A number stops the dataset at a fixed count.</dd>
+                  </div>
+                  <div class="row">
+                    <dt>Extra clips to process</dt>
+                    <dd class="val">15 %</dd>
+                    <dd class="why">Only used with a last file number. A cushion so rejected clips can be replaced.</dd>
+                  </div>
+                </dl>
+              </div>
+              <div class="set-group">
+                <h3>Audio quality</h3>
+                <dl>
+                  <div class="row">
+                    <dt>Sample rate</dt>
+                    <dd class="val">22,050 Hz</dd>
+                    <dd class="why">Also 16,000, 24,000 and 44,100.</dd>
+                  </div>
+                  <div class="row">
+                    <dt>Noise reduction</dt>
+                    <dd class="val">50 %</dd>
+                    <dd class="why">Keep it light. Heavy denoising changes the voice.</dd>
+                  </div>
+                  <div class="row">
+                    <dt>Background music</dt>
+                    <dd class="val">Auto</dd>
+                    <dd class="why">Removed only if the recording has music. You can force it on or off.</dd>
+                  </div>
+                </dl>
+              </div>
+              <div class="set-group">
+                <h3>Transcription</h3>
+                <dl>
+                  <div class="row">
+                    <dt>Urdu speech model</dt>
+                    <dd class="val">large-v3-turbo</dd>
+                    <dd class="why">Also large-v3 (most accurate, slowest), medium and small (faster, clearly worse at Urdu).</dd>
+                  </div>
+                  <div class="row">
+                    <dt>Write Roman Urdu automatically</dt>
+                    <dd class="val">On</dd>
+                    <dd class="why">Takes effect when an Anthropic API key is set in the Review step, where you also pick the model. Otherwise Claude Code or Codex writes it.</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <details class="adv">
+              <summary>Advanced: clip length and speech detection</summary>
+              <ul class="adv-list">
+                <li><strong>Shortest clip</strong><span class="val">Your choice</span><span>Clips are packed to at least this long. It starts at 2.5 s.</span></li>
+                <li><strong>Longest clip</strong><span class="val">Up to 1 min</span><span>Your choice. Up to about a minute works well, and clips never go past it. It starts at 14 s.</span></li>
+                <li><strong>Join phrases closer than</strong><span class="val">Your choice</span><span>Speech with a smaller gap is merged before packing. It starts at 0.9 s.</span></li>
+                <li><strong>Pause that splits speech</strong><span class="val">Your choice</span><span>Silence at least this long ends a speech segment. It starts at 400 ms.</span></li>
+                <li><strong>Speech threshold</strong><span class="val">0.5</span><span>Detector sensitivity, 0.1 to 0.9. Lower catches quieter speech and more noise.</span></li>
+                <li><strong>Padding around speech</strong><span class="val">Your choice</span><span>Added to both ends so soft consonants are not clipped. It starts at 250 ms.</span></li>
+                <li><strong>Loudness</strong><span class="val">-23 LUFS</span><span>Target loudness. The peak stays under -1 dBFS.</span></li>
+              </ul>
+              <p class="adv-note">
+                These only affect recordings analysed afterwards. For exact-length clips, set the shortest and longest clip to the same value. The app then
+                cuts on the clock and ignores pauses, so words can be split in half.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="review" aria-labelledby="review-title">
+        <div class="wrap sec-grid">
+          <div class="sec-body">
+            <h2 id="review-title">Fixing the transcripts</h2>
+            <p class="intro">
+              Urdu speech recognition gives a draft, not a final answer. Published word error rates for Whisper on Urdu run from about 18 percent to
+              over 40 percent depending on the benchmark. The review table is built for that.
+            </p>
+            <ul class="spec">
+              <li>Play any clip and edit the Urdu and Roman Urdu in place. Edits save when you leave the field.</li>
+              <li>Filters jump to clips that need a look, clips without Roman Urdu, and rejected clips.</li>
+              <li>Flags explain what looks wrong: repeated words, digits, low confidence, clipping and more.</li>
+              <li>Search by Urdu text, Roman text or file number.</li>
+            </ul>
+            <figure class="shot">
+              <img src="assets/review.png" width="1440" height="860" loading="lazy" alt="The review table with Urdu text, Roman Urdu and a play button on each row" />
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="faq" aria-labelledby="faq-title">
+        <div class="wrap sec-grid">
+          <div class="sec-body">
+            <h2 id="faq-title">Questions</h2>
+            <div class="faq">
+              <details name="faq">
+                <summary>Does it train a text-to-speech model?</summary>
+                <p>No. It builds the dataset you train on, and nothing else.</p>
+              </details>
+              <details name="faq">
+                <summary>Where does my audio go?</summary>
+                <p>
+                  It stays on the machine that runs the app, which is your PC or the Colab machine you started. Only the Urdu sentences are sent
+                  to the assistant you choose when Roman Urdu is written, which is Claude Code, Codex or an Anthropic API key.
+                </p>
+              </details>
+              <details name="faq">
+                <summary>Do I need a GPU or an API key?</summary>
+                <p>
+                  No to both. On a laptop CPU, transcription takes about 35 seconds per clip. A Colab GPU brings that down a lot. Without an API
+                  key, Claude Code or Codex writes the Roman Urdu, or you type it.
+                </p>
+              </details>
+              <details name="faq">
+                <summary>Can I use my Anthropic API key, and what does it cost?</summary>
+                <p>
+                  Yes. Paste the key in the app's Review step. The app lists the Claude models on your account with their prices and uses the lowest-cost one
+                  by default, Claude Haiku 5.5 at $0.10 input and $0.50 output per million tokens. It shows an estimate before it generates, which is about two cents for
+                  500 clips of six seconds. The key stays on your computer, and you choose whether the app remembers it.
+                </p>
+              </details>
+              <details name="faq">
+                <summary>How many clips does it make?</summary>
+                <p>
+                  As many as your recordings contain. Numbering starts at 1 by default and every good clip is kept. Set a first file number to
+                  continue an existing dataset, and a last file number if you want to stop at a fixed count.
+                </p>
+              </details>
+              <details name="faq">
+                <summary>Why is this site only a guide and not the app?</summary>
+                <p>
+                  The processing needs real compute and recordings that are often several GB. That fits a Colab session or your own PC, not a
+                  website, so this page helps you pick where to run it.
+                </p>
+              </details>
+              <details name="faq">
+                <summary>How accurate are the transcripts?</summary>
+                <p>
+                  Expect to correct many of them. The app flags the doubtful ones and the review table makes fixing fast. The research behind the
+                  defaults, with sources, is in the repository.
+                </p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap wide foot-in">
+        <div>
+          <strong>Talaffuz.ai</strong>
+          <p>Whisper, Silero VAD and Demucs do the audio work. MIT licensed.</p>
+        </div>
+        <div class="foot-links">
+          <a data-link="repo" target="_blank" rel="noopener noreferrer">GitHub <span class="gh-count" data-stars hidden></span></a>
+          <a data-link="guide" target="_blank" rel="noopener noreferrer">User guide</a>
+          <a data-link="colab" target="_blank" rel="noopener noreferrer">Colab notebook</a>
+          <a data-link="issues" target="_blank" rel="noopener noreferrer">Report a problem</a>
+        </div>
+      </div>
+      <div class="wrap wide foot-credit">
+        <a href="https://xovotechnologies.com/" target="_blank" rel="noopener">A contribution by <strong>XOVO Technologies</strong></a>
+      </div>
+    </footer>
+
+    <button class="to-top" type="button" id="to-top" aria-label="Scroll to top" hidden>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+    </button>
+
+    <noscript>
+      <p class="noscript">This page needs JavaScript for the dropdown, the links and the star count. The project is on GitHub: XOVO-Technologies/talaffuz.ai.</p>
+    </noscript>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script src="stage.js"></script>
+  </body>
+</html>
