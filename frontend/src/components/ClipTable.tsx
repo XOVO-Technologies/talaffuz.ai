@@ -1,4 +1,4 @@
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { api } from "../api";
 import { capacityOf, fileName, needsLook } from "../format";
 import type { Clip, Project } from "../types";
@@ -26,6 +26,18 @@ const FLAG_HELP: Record<string, string> = {
   clipping: "Audio clipping",
 };
 
+const SPEEDS = [0.75, 1, 1.25, 1.5];
+const SPEED_KEY = "urdu-dataset:playback-speed";
+
+function savedSpeed(): number {
+  try {
+    const v = Number(localStorage.getItem(SPEED_KEY));
+    return SPEEDS.includes(v) ? v : 1;
+  } catch {
+    return 1; // storage can be blocked; normal speed then
+  }
+}
+
 type Patch = Partial<Pick<Clip, "urdu" | "roman" | "keep">>;
 
 interface RowProps {
@@ -44,7 +56,7 @@ const Row = memo(function Row({ clip, slot, playing, onPlay, onSave }: RowProps)
   const name = slot !== null ? fileName(slot) : "this clip";
 
   return (
-    <tr className={`${clip.keep ? "" : "rejected"} ${playing ? "playing" : ""}`}>
+    <tr className={`${clip.keep ? "" : "rejected"} ${playing ? "playing" : ""}`} data-id={clip.id}>
       <td className="num">
         {slot !== null ? (
           fileName(slot)
@@ -126,6 +138,7 @@ export function ClipTable({ project, onPatched }: { project: Project; onPatched:
   const search = useDeferredValue(query.trim().toLowerCase());
   const [limit, setLimit] = useState(PAGE);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [speed, setSpeed] = useState(savedSpeed);
   const playingRef = useRef<string | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const projectId = project.id;
@@ -144,6 +157,8 @@ export function ClipTable({ project, onPatched }: { project: Project; onPatched:
       .forEach((c, i) => map.set(c.id, project.settings.start_index + i));
     return map;
   }, [processed, project.settings]);
+
+  const byId = useMemo(() => new Map(processed.map((c) => [c.id, c])), [processed]);
 
   const counts = useMemo(
     () => Object.fromEntries(FILTERS.map((f) => [f.id, processed.filter(f.test).length])) as Record<Filter, number>,
@@ -176,6 +191,20 @@ export function ClipTable({ project, onPatched }: { project: Project; onPatched:
     return () => a.pause();
   }, []);
 
+  // A new src resets playbackRate to defaultPlaybackRate, so set both.
+  useEffect(() => {
+    const a = audio.current;
+    if (a) {
+      a.defaultPlaybackRate = speed;
+      a.playbackRate = speed;
+    }
+    try {
+      localStorage.setItem(SPEED_KEY, String(speed));
+    } catch {
+      /* storage can be blocked; the speed then lasts for this visit only */
+    }
+  }, [speed]);
+
   // Stable identities so the memoised rows do not all re-render on every change.
   const play = useCallback(
     (clip: Clip) => {
@@ -205,6 +234,38 @@ export function ClipTable({ project, onPatched }: { project: Project; onPatched:
     [projectId, onPatched],
   );
 
+  // Shortcuts for the row that has focus, so review needs no trips to the mouse. One listener on the table body
+  // keeps the memoised rows untouched. Alt+K uses the physical key so it also works with an Urdu keyboard layout.
+  const onKeyDown = (e: KeyboardEvent<HTMLTableSectionElement>) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest<HTMLTableRowElement>("tr[data-id]");
+    const clip = row && byId.get(row.dataset.id ?? "");
+    if (!row || !clip) return;
+    const plain = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
+
+    if (e.key === "Escape" && plain && playingRef.current) {
+      e.preventDefault();
+      audio.current?.pause();
+      playingRef.current = null;
+      setPlayingId(null);
+    } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+      e.preventDefault();
+      if (clip.duration_s) play(clip);
+    } else if (e.code === "KeyK" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      void save(clip.id, { keep: !clip.keep });
+    } else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      const next = (e.key === "ArrowDown" ? row.nextElementSibling : row.previousElementSibling) as HTMLTableRowElement | null;
+      const nextClip = next && byId.get(next.dataset.id ?? "");
+      if (!next || !nextClip) return;
+      e.preventDefault();
+      // Stay in the same column. Leaving the field saves it, as with a click elsewhere.
+      next.querySelector<HTMLElement>(target.matches("textarea.roman") ? "textarea.roman" : "textarea.urdu")?.focus({ preventScroll: true });
+      next.scrollIntoView({ block: "nearest" });
+      if (nextClip.duration_s && playingRef.current !== nextClip.id) play(nextClip);
+    }
+  };
+
   if (processed.length === 0) {
     return <div className="empty">Clips appear here as they are processed. Start the run above to fill this table.</div>;
   }
@@ -219,15 +280,32 @@ export function ClipTable({ project, onPatched }: { project: Project; onPatched:
             </button>
           ))}
         </div>
-        <input
-          type="search"
-          className="search"
-          placeholder="Search Urdu, Roman or file number"
-          aria-label="Search clips"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="toolbar-end">
+          <label className="speed small">
+            Speed
+            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Playback speed">
+              {SPEEDS.map((s) => (
+                <option key={s} value={s}>
+                  {s}×
+                </option>
+              ))}
+            </select>
+          </label>
+          <input
+            type="search"
+            className="search"
+            placeholder="Search Urdu, Roman or file number"
+            aria-label="Search clips"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
       </div>
+      <p className="hint shortcuts">
+        While editing a row: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> plays or stops the clip, <kbd>Alt</kbd>+<kbd>↓</kbd> and{" "}
+        <kbd>Alt</kbd>+<kbd>↑</kbd> move to the next or previous clip and play it, <kbd>Alt</kbd>+<kbd>K</kbd> ticks or unticks
+        Keep, and <kbd>Esc</kbd> stops playback.
+      </p>
       {shown.length === 0 ? (
         <div className="empty">{search ? "No clips match your search." : "No clips in this view."}</div>
       ) : (
@@ -242,7 +320,7 @@ export function ClipTable({ project, onPatched }: { project: Project; onPatched:
                 <th>Keep</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody onKeyDown={onKeyDown}>
               {shown.slice(0, limit).map((c) => (
                 <Row key={c.id} clip={c} slot={slots.get(c.id) ?? null} playing={playingId === c.id} onPlay={play} onSave={save} />
               ))}
