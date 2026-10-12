@@ -166,6 +166,7 @@ Keep one speaker per project, and start a new project for each voice. The diagra
 | **Roman Urdu, your way** | Claude Code writes it with `/romanize`, Codex with `$romanize`, or paste an Anthropic API key and the app does it, on the lowest-cost model by default. |
 | **A fast review table** | Play a clip, fix the text, search, filter by flags and untick Keep on bad clips. Keyboard shortcuts and a playback speed control keep long reviews quick. Edits save as you leave a field. |
 | **Smart flags** | Repeated words, digits, low confidence, clipping and more are marked so you look at the right clips first. |
+| **Find and replace** | Fix a word the transcription keeps getting wrong, or make one Roman Urdu spelling consistent, in every clip at once. |
 | **Numbering you control** | Start at any number to continue an existing dataset. Set a last number to stop at a fixed count, or leave it empty to keep every good clip. |
 | **A format that is checked** | The export is re-read after writing and verified before you can download it. |
 | **Resume any time** | Progress is saved after every clip. Stop, close the app and continue later. |
@@ -285,6 +286,8 @@ Press **Start**. The app finds the speech, then cleans and transcribes the clips
 ### 4. Review
 
 Play each clip, fix the Urdu and Roman Urdu, and untick **Keep** on any clip you do not want. Filters switch between all clips, clips that need a look, clips without Roman Urdu and rejected clips, and the search box matches Urdu, Roman text and file numbers. A clip marked **extra** is a kept clip beyond your last file number and is left out of the export.
+
+**Find and replace in every clip** fixes the same mistake everywhere at once, such as a name the transcription always gets wrong, or `bohot` and `bohat` mixed in the Roman Urdu. Pick the column, type what to find and what to put instead, and the panel shows how many clips will change before you press **Replace all**. Whole words only is on by default, so `kam` does not touch `kamra`. In the Roman Urdu a match is found in any case, and a capital at the start of a sentence is kept. In the Urdu the search uses the same letter forms as the transcripts, so a word typed with an Arabic keyboard still matches. Clips that are not processed yet are left alone, and there is no undo.
 
 <details>
 <summary>What the flags mean</summary>

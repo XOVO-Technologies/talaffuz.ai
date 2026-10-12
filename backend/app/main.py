@@ -17,10 +17,10 @@ from fastapi.staticfiles import StaticFiles
 from . import config
 from .jobs import JobManager
 from .models import (ClipPatch, ExportRequest, ImportRequest, KeyRequest, ModelRequest, ProcessRequest, Project,
-                     ProjectCreate, ProcessingSettings, RomanizeRequest, SourceFile)
+                     ProjectCreate, ProcessingSettings, ReplaceRequest, RomanizeRequest, SourceFile)
 from .pipeline import export, romanize, transcribe
 from .pipeline.audio_io import ffmpeg_exe
-from .pipeline.text_ur import assess_transcript, clean_roman, normalize_urdu
+from .pipeline.text_ur import assess_transcript, clean_roman, normalize_urdu, replace_words
 from .store import ProjectStore
 
 app = FastAPI(title="Talaffuz.ai")
@@ -352,6 +352,37 @@ def bulk_patch(pid: str, patches: list[ClipPatch], fill_only: bool = False):
             _apply_patch(clip, patch)
             changed += 1
     return {"changed": changed}
+
+
+def _replace_all(clips, body: ReplaceRequest) -> dict:
+    urdu = body.field == "urdu"
+    # The search text gets the same clean-up as the stored text, so a different letter form still matches.
+    tidy = (lambda t: normalize_urdu(t, ensure_terminal=False)) if urdu else clean_roman
+    find, replacement = tidy(body.find), tidy(body.replace)
+    if not find:
+        raise HTTPException(400, "Type the text to find.")
+    changed = places = 0
+    for clip in clips:
+        if clip.status != "processed":
+            continue
+        old = getattr(clip, body.field)
+        new, n = replace_words(old, find, replacement, body.whole_word, ignore_case=not urdu)
+        if new == old:
+            continue
+        changed, places = changed + 1, places + n
+        if not body.dry_run:
+            _apply_patch(clip, ClipPatch(**{body.field: new}))
+    return {"clips": changed, "places": places}
+
+
+@app.post("/api/projects/{pid}/clips/replace")
+def replace_in_clips(pid: str, body: ReplaceRequest):
+    """Find and replace a word or phrase in the Urdu or Roman Urdu of every processed clip."""
+    project = _project(pid)
+    if body.dry_run:
+        return _replace_all(project.clips, body)  # a snapshot, so nothing is changed or saved
+    with store.edit(pid) as live:
+        return _replace_all(live.clips, body)
 
 
 @app.get("/api/projects/{pid}/clips/{cid}/audio")

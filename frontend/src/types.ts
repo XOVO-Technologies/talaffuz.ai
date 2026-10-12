@@ -122,3 +122,16 @@ export interface JobEvent {
   done?: number;
   total?: number;
 }
+
+export interface ReplaceRequest {
+  field: "urdu" | "roman";
+  find: string;
+  replace: string;
+  whole_word: boolean;
+  dry_run: boolean; // only count what would change
+}
+
+export interface ReplaceResult {
+  clips: number; // clips whose text changes
+  places: number;
+}

@@ -7,6 +7,7 @@ import { ExportPanel } from "./components/ExportPanel";
 import { GithubStars } from "./components/GithubStars";
 import { Logo } from "./components/icons";
 import { JobProgress } from "./components/JobProgress";
+import { ReplacePanel } from "./components/ReplacePanel";
 import { RomanPanel } from "./components/RomanPanel";
 import { SettingsPanel, validateSettings } from "./components/SettingsPanel";
 import { Stepper, type StepInfo } from "./components/Stepper";
@@ -546,6 +547,9 @@ export default function App() {
             />
           )}
           <div style={{ marginTop: missingRoman > 0 || romanizeViaApi ? 20 : 0 }}>
+            {project.clips.some((c) => c.status === "processed") && (
+              <ReplacePanel project={project} onDone={() => void refresh(project.id)} onError={setError} />
+            )}
             <ClipTable project={project} onPatched={onPatched} />
           </div>
         </Card>

@@ -168,3 +168,56 @@ def test_model_choice_and_cost_estimate(key_client):
 
 def test_unknown_project_is_404(client):
     assert client.get("/api/projects/nope").status_code == 404
+
+
+def test_find_and_replace_across_clips(client):
+    from app import main
+    from app.models import Clip
+
+    pid = client.post("/api/projects", json={}).json()["id"]
+    with main.store.edit(pid) as live:
+        live.clips = [
+            Clip(id="a", source_id="s", order=0, start_s=0, end_s=3, duration_s=3, status="processed",
+                 urdu="یہ کام اچھا ہے۔", roman="Yeh kaam bohot achha hai.", wav="a.wav"),
+            Clip(id="b", source_id="s", order=1, start_s=3, end_s=6, duration_s=3, status="processed",
+                 urdu="کامیاب ہو گئے۔", roman="Bohot shukriya, bohot.", wav="b.wav"),
+            Clip(id="c", source_id="s", order=2, start_s=6, end_s=9, status="pending", roman="bohot"),
+        ]
+    url = f"/api/projects/{pid}/clips/replace"
+
+    def clips():
+        return {c["id"]: c for c in client.get(f"/api/projects/{pid}").json()["clips"]}
+
+    roman = {"field": "roman", "find": "bohot", "replace": "bohat"}
+    assert client.post(url, json=dict(roman, dry_run=True)).json() == {"clips": 2, "places": 3}
+    assert clips()["a"]["roman"] == "Yeh kaam bohot achha hai."  # a preview changes nothing
+
+    assert client.post(url, json=roman).json() == {"clips": 2, "places": 3}
+    after = clips()
+    assert after["a"]["roman"] == "Yeh kaam bohat achha hai."
+    assert after["b"]["roman"] == "Bohat shukriya, bohat."
+    assert after["c"]["roman"] == "bohot"  # clips that are not processed yet are left alone
+    assert client.post(url, json=roman).json() == {"clips": 0, "places": 0}
+
+    # The Arabic kaf in the search text is normalised to the Urdu kaf the transcripts use. Whole words only.
+    urdu = client.post(url, json={"field": "urdu", "find": "كام", "replace": "کاج"}).json()
+    assert urdu == {"clips": 1, "places": 1}
+    after = clips()
+    assert after["a"]["urdu"] == "یہ کاج اچھا ہے۔" and after["a"]["edited"]
+    assert after["b"]["urdu"] == "کامیاب ہو گئے۔"
+
+    # An empty replacement removes the word, and the gap it leaves is tidied in both columns.
+    assert client.post(url, json={"field": "roman", "find": "kaam"}).json() == {"clips": 1, "places": 1}
+    assert client.post(url, json={"field": "urdu", "find": "اچھا"}).json() == {"clips": 1, "places": 1}
+    after = clips()
+    assert after["a"]["roman"] == "Yeh bohat achha hai."
+    assert after["a"]["urdu"] == "یہ کاج ہے۔"
+
+
+def test_find_and_replace_rejects_empty_search(client):
+    pid = client.post("/api/projects", json={}).json()["id"]
+    url = f"/api/projects/{pid}/clips/replace"
+    assert client.post(url, json={"field": "roman", "find": ""}).status_code == 422
+    assert client.post(url, json={"field": "roman", "find": " | "}).status_code == 400
+    assert client.post(url, json={"field": "notes", "find": "x"}).status_code == 422
+    assert client.post("/api/projects/nope/clips/replace", json={"field": "roman", "find": "x"}).status_code == 404

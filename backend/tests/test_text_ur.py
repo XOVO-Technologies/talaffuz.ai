@@ -1,4 +1,4 @@
-from app.pipeline.text_ur import assess_transcript, clean_roman, has_repetition, normalize_urdu
+from app.pipeline.text_ur import assess_transcript, clean_roman, has_repetition, normalize_urdu, replace_words
 
 
 def test_spec_examples_are_unchanged():
@@ -40,3 +40,20 @@ def test_assess_flags():
     assert "not_urdu_script" in flags and not reject
     flags, reject = assess_transcript("آپ کہاں جا رہے ہیں؟", 2.0, -1.5, 0.9)
     assert "maybe_not_speech" in flags and reject
+
+
+def test_replace_words_matches_whole_words_only():
+    assert replace_words("یہ کام کامیاب ہے۔", "کام", "کاج") == ("یہ کاج کامیاب ہے۔", 1)
+    assert replace_words("bohotsa", "bohot", "bohat") == ("bohotsa", 0)
+    assert replace_words("bohotsa", "bohot", "bohat", whole_word=False) == ("bohatsa", 1)
+
+
+def test_replace_words_ignore_case_keeps_a_leading_capital():
+    assert replace_words("Bohot bohot achha.", "bohot", "bohat", ignore_case=True) == ("Bohat bohat achha.", 2)
+    assert replace_words("Bohot achha.", "bohot", "bohat") == ("Bohot achha.", 0)
+
+
+def test_replace_words_punctuation_and_deletion():
+    assert replace_words("وہ گیا۔ وہ آیا۔", "۔", "؟") == ("وہ گیا؟ وہ آیا؟", 2)
+    assert replace_words("Haan ji theek hai", "ji", "") == ("Haan  theek hai", 1)  # the API tidies the spaces
+    assert replace_words("anything", "", "x") == ("anything", 0)

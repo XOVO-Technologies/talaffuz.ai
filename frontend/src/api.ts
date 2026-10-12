@@ -1,4 +1,4 @@
-import type { Clip, ExportReport, Health, KeyStatus, ModelList, Project, ProjectSummary, RomanEstimate, Settings, Source } from "./types";
+import type { Clip, ExportReport, Health, KeyStatus, ModelList, Project, ProjectSummary, ReplaceRequest, ReplaceResult, RomanEstimate, Settings, Source } from "./types";
 
 async function parse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -43,6 +43,8 @@ export const api = {
   cancel: (id: string) => send("POST", `/api/projects/${id}/cancel`).then(parse<unknown>),
   patchClip: (id: string, cid: string, patch: Partial<Pick<Clip, "urdu" | "roman" | "keep">>) =>
     send("PATCH", `/api/projects/${id}/clips/${cid}`, patch).then(parse<Clip>),
+  replaceText: (id: string, body: ReplaceRequest) =>
+    send("POST", `/api/projects/${id}/clips/replace`, body).then(parse<ReplaceResult>),
   exportDataset: (id: string, force: boolean) =>
     send("POST", `/api/projects/${id}/export`, { force }).then(parse<ExportReport>),
   clipAudio: (id: string, cid: string) => `/api/projects/${id}/clips/${cid}/audio`,

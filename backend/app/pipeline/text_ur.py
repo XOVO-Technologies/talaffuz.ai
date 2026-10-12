@@ -88,3 +88,27 @@ def assess_transcript(
         if "low_confidence" in flags:
             reject = True
     return flags, reject
+
+
+def replace_words(
+    text: str, find: str, replacement: str, whole_word: bool = True, ignore_case: bool = False
+) -> tuple[str, int]:
+    """Replace `find` in `text`. Returns the new text and how many places changed.
+
+    whole_word skips matches inside a longer word. With ignore_case, a match that starts with a capital keeps it,
+    so replacing "bohot" with "bohat" turns "Bohot" at the start of a sentence into "Bohat"."""
+    if not find:
+        return text, 0
+    pattern = re.escape(find)
+    if whole_word:  # a boundary only makes sense next to a letter, so "۔" or "?" still match after a word
+        if re.match(r"\w", find):
+            pattern = r"(?<!\w)" + pattern
+        if re.search(r"\w$", find):
+            pattern += r"(?!\w)"
+
+    def swap(m: re.Match[str]) -> str:
+        if ignore_case and m.group(0)[:1].isupper() and replacement[:1].islower():
+            return replacement[:1].upper() + replacement[1:]
+        return replacement
+
+    return re.subn(pattern, swap, text, flags=re.IGNORECASE if ignore_case else 0)

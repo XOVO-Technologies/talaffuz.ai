@@ -106,6 +106,14 @@ class ClipPatch(BaseModel):
     keep: bool | None = None
 
 
+class ReplaceRequest(BaseModel):
+    field: Literal["urdu", "roman"]
+    find: str = Field(min_length=1, max_length=200)
+    replace: str = Field("", max_length=200)
+    whole_word: bool = True
+    dry_run: bool = False  # only count what would change
+
+
 class ProcessRequest(BaseModel):
     extra: int = Field(0, ge=0, le=2000)  # raise the processing goal by this many clips
 
