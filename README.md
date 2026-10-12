@@ -164,7 +164,7 @@ Keep one speaker per project, and start a new project for each voice. The diagra
 | **Cleans the audio** | Music is removed only when a recording has some. Noise is reduced lightly, edges are trimmed and loudness is levelled to -23 LUFS. |
 | **Urdu transcripts** | faster-whisper writes the Urdu for every clip, then normalises letter forms and punctuation. |
 | **Roman Urdu, your way** | Claude Code writes it with `/romanize`, Codex with `$romanize`, or paste an Anthropic API key and the app does it, on the lowest-cost model by default. |
-| **A fast review table** | Play a clip, fix the text, search, filter by flags and untick Keep on bad clips. Edits save as you leave a field. |
+| **A fast review table** | Play a clip, fix the text, search, filter by flags and untick Keep on bad clips. Keyboard shortcuts and a playback speed control keep long reviews quick. Edits save as you leave a field. |
 | **Smart flags** | Repeated words, digits, low confidence, clipping and more are marked so you look at the right clips first. |
 | **Numbering you control** | Start at any number to continue an existing dataset. Set a last number to stop at a fixed count, or leave it empty to keep every good clip. |
 | **A format that is checked** | The export is re-read after writing and verified before you can download it. |
@@ -303,6 +303,17 @@ Play each clip, fix the Urdu and Roman Urdu, and untick **Keep** on any clip you
 | clipping | The audio peaks too hard. |
 
 </details>
+
+The keyboard saves trips to the mouse when you review hundreds of clips. While the cursor is in a row:
+
+| Keys | What they do |
+|---|---|
+| `Ctrl+Enter` | Play or stop the clip |
+| `Alt+↓` / `Alt+↑` | Go to the next or previous clip, in the same column, and play it |
+| `Alt+K` | Tick or untick Keep |
+| `Esc` | Stop playback |
+
+**Speed** above the table plays clips at 0.75× to 1.5×. A slower speed helps you catch every word, and the app remembers your choice.
 
 ### 5. Export
 

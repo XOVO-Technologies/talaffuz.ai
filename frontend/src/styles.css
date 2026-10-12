@@ -332,6 +332,11 @@ details.advanced .grid { padding-bottom: 18px; }
 .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 .chip.on:hover:not(:disabled) { background: var(--accent-strong); color: #fff; }
 input.search { width: 280px; max-width: 100%; }
+.toolbar-end { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.speed { display: inline-flex; align-items: center; gap: 8px; }
+.speed select { width: auto; padding: 7px 10px; }
+.shortcuts { margin: -4px 0 14px; font-size: 13.5px; }
+kbd { font-family: var(--mono-font); font-size: 12px; color: var(--ink); background: var(--white); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
 .table-wrap { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: var(--radius-md); }
 table { width: 100%; border-collapse: collapse; }
 th { position: sticky; top: 0; z-index: 2; background: #f4f6f9; text-align: left; font: 600 13px/1.2 var(--font-display); color: var(--muted); padding: 12px; border-bottom: 1px solid var(--line-strong); }
@@ -344,6 +349,7 @@ td.keep { text-align: center; }
 tr.rejected { opacity: 0.55; }
 tr.rejected:hover, tr.rejected:focus-within { opacity: 1; }
 tr.playing { background: var(--accent-soft); }
+tbody tr { scroll-margin-top: 44px; } /* keeps a row moved to with Alt+arrow clear of the sticky header */
 textarea.urdu { font-family: var(--urdu-font); font-size: 19px; line-height: 2.2; }
 .play { width: 40px; height: 36px; padding: 0; border-radius: 10px; }
 .clip-audio { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
@@ -384,6 +390,7 @@ dialog.modal::backdrop { background: rgba(34, 32, 34, 0.5); }
   .topbar-inner { padding: 10px 16px; }
   .topbar-actions select { min-width: 0; flex: 1; }
   .table-wrap { max-height: none; border: 0; overflow: visible; }
+  .shortcuts { display: none; }
   table, tbody, tr, td { display: block; width: 100%; }
   thead { display: none; }
   tr { border: 1px solid var(--line); border-radius: var(--radius-md); margin-bottom: 12px; padding: 4px 0; background: var(--white); }
