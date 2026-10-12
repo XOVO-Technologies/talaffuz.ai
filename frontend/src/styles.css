@@ -350,6 +350,13 @@ textarea.urdu { font-family: var(--urdu-font); font-size: 19px; line-height: 2.2
 .flags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .flag { font-size: 12.5px; font-weight: 600; background: var(--accent-soft); color: var(--accent-strong); border-radius: 999px; padding: 2px 10px; cursor: help; }
 .flag.bad { background: rgba(255, 0, 3, 0.08); color: var(--danger-text); cursor: default; }
+details.replace { margin-bottom: 16px; }
+.replace form { display: grid; grid-template-columns: 180px 1fr 1fr; gap: 14px 16px; align-items: end; padding-bottom: 18px; }
+.replace-help { grid-column: 1 / -1; max-width: 75ch; }
+.replace-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; }
+.replace-foot button { margin-left: auto; }
+input.urdu-input { font-family: var(--urdu-font); font-size: 17px; line-height: 1.9; padding-top: 3px; padding-bottom: 3px; }
+input.urdu-input::placeholder { font-family: var(--font-body); font-size: 15px; }
 .empty { text-align: center; padding: 40px 16px; border: 2px dashed var(--line-strong); border-radius: var(--radius-md); background: #f7f9fc; }
 
 /* ---------- Export ---------- */
@@ -394,4 +401,6 @@ dialog.modal::backdrop { background: rgba(34, 32, 34, 0.5); }
   .source-main { flex: 1 1 100%; }
   .source .bar { flex-basis: 100%; }
   .toast { left: 16px; right: 16px; max-width: none; }
+  .replace form { grid-template-columns: 1fr; }
+  .replace-foot button { margin-left: 0; }
 }
