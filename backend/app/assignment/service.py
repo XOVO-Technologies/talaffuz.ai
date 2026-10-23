@@ -116,7 +116,7 @@ class AssignmentService:
             if not force and self.scan_cache and self.scan_cache[0] == str(folder):
                 return self.scan_cache[1]
             try:
-                result = source.scan(folder)
+                result = source.scan(folder, profile.source_path.strip())
             except SourceError as exc:
                 self.scan_cache = None
                 self.text_cache = None

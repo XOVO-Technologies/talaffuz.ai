@@ -85,9 +85,21 @@ def read_rows(folder: Path, base: Path) -> tuple[list[tuple[str, str, str]], str
     return rows, xlsx_path.name
 
 
-def scan(folder: Path) -> SourceScan:
+def explain_missing(raw: str, folder: Path) -> str:
+    if "://" in raw or raw.lower().startswith("drive.google.com"):
+        return (
+            "That is a web link, and this app can only read folders on the machine it runs on. "
+            "On Colab, mount Google Drive in step 3 of the notebook, then paste a path such as "
+            "/content/drive/MyDrive/talaffuz.ai/dataset (right-click the folder in the Colab file browser and choose Copy path)."
+        )
+    if str(folder).replace("\\", "/").startswith("/content/drive") and not Path("/content/drive/MyDrive").exists():
+        return "Google Drive is not mounted yet. Run step 3 of the notebook and allow access, then check the folder again."
+    return f"Folder not found: {folder}"
+
+
+def scan(folder: Path, raw: str = "") -> SourceScan:
     if not folder.is_dir():
-        raise SourceError(f"Folder not found: {folder}")
+        raise SourceError(explain_missing(raw or str(folder), folder))
     base, wavs = find_layout(folder)
     rows, metadata_file = read_rows(folder, base)
     rows.sort(key=lambda row: natural_key(row[0]))

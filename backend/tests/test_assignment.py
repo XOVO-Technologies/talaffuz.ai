@@ -318,3 +318,11 @@ def test_readme_and_experience_follow_the_teacher_sample_layout(tmp_path, monkey
     assert experience.startswith("# Experience Form - 7C_042_M\n\n> Har sawal")
     assert "## 1. Kul kitna waqt laga? (ghanton mein, andaza)\n\n- Recording: 6 hours\n" in experience
     assert "## 2. Mushkil kitni lagi? (1 = bohat aasan, 5 = bohat mushkil)\n\n3. Cutting words took time\n" in experience
+
+
+def test_a_drive_web_link_gets_a_clear_message(client, tmp_path):
+    link = "https://drive.google.com/drive/folders/1Ji4E8c5OK_xVZ8NDfEm9qygGz9nUrQT9"
+    client.put("/api/assignment/profile", json=profile(source_path=link).model_dump())
+    state = client.post("/api/assignment/scan").json()
+    assert state["source"] is None
+    assert "web link" in state["source_error"] and "/content/drive/MyDrive" in state["source_error"]

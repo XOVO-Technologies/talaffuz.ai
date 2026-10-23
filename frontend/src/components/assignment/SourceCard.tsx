@@ -68,7 +68,7 @@ export function SourceCard({ state, draft, scanning, version, disabled, onPath, 
         </button>
       </div>
       <p className="hint source-help">
-        The folder holds <code>wavs/</code> and <code>metadata.csv</code> or <code>metadata.xlsx</code>, the files the dataset builder exports. On Colab, paste the Drive path to a project&apos;s <code>output/dataset</code> folder.
+        The folder holds <code>wavs/</code> and <code>metadata.csv</code> or <code>metadata.xlsx</code>, the files the dataset builder exports. On Colab, paste a path that starts with <code>/content/drive/MyDrive/</code> (a Google Drive web link will not work), after mounting Drive in step 3 of the notebook.
       </p>
 
       {state.source_error && (
