@@ -1,4 +1,4 @@
-import type { Clip, ExportReport, Health, KeyStatus, ModelList, Project, ProjectSummary, ReplaceRequest, ReplaceResult, RomanEstimate, Settings, Source } from "./types";
+import type { AssignmentProblem, AssignmentProblemList, AssignmentProfile, AssignmentState, Clip, ExportReport, Health, KeyStatus, ModelList, Project, ProjectSummary, ReplaceRequest, ReplaceResult, RomanEstimate, Settings, Source } from "./types";
 
 async function parse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -49,6 +49,19 @@ export const api = {
     send("POST", `/api/projects/${id}/export`, { force }).then(parse<ExportReport>),
   clipAudio: (id: string, cid: string) => `/api/projects/${id}/clips/${cid}/audio`,
   download: (id: string, kind: "zip" | "csv" | "xlsx") => `/api/projects/${id}/download/${kind}`,
+
+  assignmentState: () => fetch("/api/assignment/state").then(parse<AssignmentState>),
+  assignmentSaveProfile: (profile: AssignmentProfile) => send("PUT", "/api/assignment/profile", profile).then(parse<AssignmentState>),
+  assignmentScan: () => send("POST", "/api/assignment/scan").then(parse<AssignmentState>),
+  assignmentProblems: (kind: "bad" | "check", offset: number, limit: number) =>
+    fetch(`/api/assignment/problems?kind=${kind}&offset=${offset}&limit=${limit}`).then(parse<AssignmentProblemList>),
+  assignmentEdit: (body: { key: string; sentence: number | null; urdu: string; roman: string }) =>
+    send("PUT", "/api/assignment/edit", body).then(parse<AssignmentProblem | { removed: true }>),
+  assignmentTiming: (redo: boolean) => send("POST", "/api/assignment/timing", { redo }).then(parse<unknown>),
+  assignmentBuild: () => send("POST", "/api/assignment/build").then(parse<unknown>),
+  assignmentCheck: () => send("POST", "/api/assignment/check").then(parse<unknown>),
+  assignmentCancel: () => send("POST", "/api/assignment/cancel").then(parse<unknown>),
+  assignmentDownload: "/api/assignment/download",
 
   /** Raw-body upload (not multipart) so multi-GB files stream straight to disk and report progress. */
   uploadFile(id: string, file: File, onProgress: (fraction: number) => void): Promise<Source> {

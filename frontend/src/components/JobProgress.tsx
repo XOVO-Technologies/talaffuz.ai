@@ -3,7 +3,13 @@ import { formatDuration } from "../format";
 import type { JobEvent } from "../types";
 import { ProgressBar } from "./ProgressBar";
 
-const TITLES: Record<string, string> = { process: "Cleaning and transcribing", romanize: "Writing Roman Urdu" };
+const TITLES: Record<string, string> = {
+  process: "Cleaning and transcribing",
+  romanize: "Writing Roman Urdu",
+  assignment_timing: "Finding word timings",
+  assignment_build: "Building the dataset",
+  assignment_check: "Checking the dataset",
+};
 
 export function JobProgress({ running, event }: { running: string; event: JobEvent | null }) {
   const base = useRef<{ t: number; done: number } | null>(null);

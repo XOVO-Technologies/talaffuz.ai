@@ -1,0 +1,4 @@
+file_name,speaker_id,section,roll_no,gender,recording_id,sentence_id,start_sec,end_sec,duration_sec,urdu_text,roman_urdu_text
+7C_042_M_R005_S01.wav,7C_042_M,7C,042,M,R005,S01,0.40,3.89,3.49,آج بارش ہونے کا امکان ہے,Aaj baarish honay ka imkaan hai
+7C_042_M_R005_S02.wav,7C_042_M,7C,042,M,R005,S02,4.24,7.42,3.18,ہمارا امتحان اگلے ہفتے ہے,Hamara imtihaan aglay haftay hai
+7C_042_M_R005_S03.wav,7C_042_M,7C,042,M,R005,S03,7.77,10.63,2.86,وہ روز مسجد جاتا ہے,Woh roz masjid jata hai

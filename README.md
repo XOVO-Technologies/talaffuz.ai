@@ -47,6 +47,7 @@ Sentence-length clips, Urdu transcripts, Roman Urdu and metadata files, all from
 <a href="#how-it-works">How it works</a> &nbsp;•&nbsp;
 <a href="#using-the-app">Using the app</a> &nbsp;•&nbsp;
 <a href="#roman-urdu">Roman Urdu</a> &nbsp;•&nbsp;
+<a href="#assignment-2-dataset">Assignment 2</a> &nbsp;•&nbsp;
 <a href="#tech-stack">Tech stack</a> &nbsp;•&nbsp;
 <a href="#questions-and-tips">Questions</a> &nbsp;•&nbsp;
 <a href="#contributors">Contributors</a> &nbsp;•&nbsp;
@@ -169,6 +170,7 @@ Keep one speaker per project, and start a new project for each voice. The diagra
 | **Find and replace** | Fix a word the transcription keeps getting wrong, or make one Roman Urdu spelling consistent, in every clip at once. |
 | **Numbering you control** | Start at any number to continue an existing dataset. Set a last number to stop at a fixed count, or leave it empty to keep every good clip. |
 | **A format that is checked** | The export is re-read after writing and verified before you can download it. |
+| **Assignment 2 tab** | Enter your name, section and roll number and the app builds the whole Urdu speech dataset folder for the course assignment, checks it and zips it. See [Assignment 2 dataset](#assignment-2-dataset). |
 | **Resume any time** | Progress is saved after every clip. Stop, close the app and continue later. |
 | **Runs where you are** | Windows, Google Colab, Claude Code or Codex. CPU or GPU. |
 
@@ -325,6 +327,44 @@ The checklist shows how many clips are ready, how many still need Roman Urdu and
 ### Projects
 
 The selector in the header switches between projects. Use **New project** to keep another speaker or batch separate, and **Delete** to remove a project and its files.
+
+## Assignment 2 dataset
+
+The **Assignment 2** tab turns the dataset you already built into the folder that the course assignment asks for. It is for the Urdu Speech Dataset assignment (sections 7C, 7D, 7F, 7G and 7J), and it follows the rules in the assignment sheet.
+
+You enter your details once. The app then builds `7C_042_M/` (your own ID) with:
+
+```text
+7C_042_M/
+  README.md
+  EXPERIENCE.md
+  recordings/{train,test}/   wav files and metadata.csv
+  sentences/{train,test}/    wav files and metadata.csv
+  words/{train,test}/        wav files and metadata.csv
+```
+
+and `7C_042_M.zip` next to it, in `data/assignment/output/`.
+
+**The five steps in the tab**
+
+1. **Your details.** Name, section, roll number, gender, phone model, place and dates. The ID (`SECTION_ROLLNO_GENDER`, with the roll number in three digits) is built for you.
+2. **Recordings and text.** Pick the folder with `wavs/` and `metadata.csv` or `metadata.xlsx`, such as the `dataset/` folder or a project export. Each clip becomes one recording, in order, `R001` to `R400` for train and `R401` to `R500` for test. The app splits every recording into sentences and every sentence into words, and makes the Urdu and Roman Urdu word counts equal in every sentence. Where the Roman text joins or splits words differently from the Urdu, it pairs them using the spellings already in your data, and lists the pairs it was less sure about so you can look. A sentence it cannot pair is shown for you to fix by hand.
+3. **Word timing.** A forced aligner (MMS, through torchaudio) finds where every word starts and ends in the audio. These times cut the sentence and word files and fill `start_sec` and `end_sec`. Results are saved after every recording, so you can stop and continue.
+4. **Experience form.** The seven questions of `EXPERIENCE.md`, answered in your own words.
+5. **Build and check.** Writes 16 kHz mono 16-bit wavs, the six `metadata.csv` files, the README and the form, then checks the folder against the assignment rules and makes the zip.
+
+**Speed.** Word timing is the slow part. On an 8-thread laptop CPU it takes about 25 seconds for each 45 second recording, which is around three and a half hours for 500. On a GPU it is far faster, so the [Colab notebook](#run-it-on-google-colab) is the better place to run it. Build the dataset in the Dataset builder tab first, then open the Assignment 2 tab on the same machine.
+
+**Choices the app makes**
+
+- Roman Urdu is written in lowercase with the letters a to z only, so one word has one spelling. This can be switched off under *Counts and spelling*.
+- Sentence and word text has no punctuation. Recording text ends each sentence with `۔` and `.`.
+- Hyphenated Roman words are joined to match the Urdu, so `jang-e-azeem` becomes `jange azeem` when the Urdu has two words.
+- The sentences and words of a recording always go to the same split as the recording.
+
+**The checks.** After a build the app runs its own checker, which covers file names, audio settings, missing files, metadata columns and times, word counts, the train and test rule, the README and the experience form. If you put your teacher's `check_dataset.py` in `data/assignment/` or in the app folder, the app runs it on the zip too and shows its output.
+
+If you have fewer clips than the assignment needs, the tab says how many are missing. Process more clips in the Dataset builder tab, export again and check the folder again.
 
 ## Roman Urdu
 

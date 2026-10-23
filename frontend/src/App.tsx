@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
+import { AssignmentPage } from "./components/assignment/AssignmentPage";
 import { BackendMissing } from "./components/BackendMissing";
+import { Card, Stat, goTo } from "./components/Card";
 import { ClipTable } from "./components/ClipTable";
 import { useDialog } from "./components/Dialog";
 import { ExportPanel } from "./components/ExportPanel";
@@ -19,6 +21,10 @@ import type { Clip, Health, JobEvent, KeyStatus, Project, ProjectSummary, Settin
 const LAST_KEY = "urdu-dataset:last-project";
 const SECONDS_PER_CLIP = 35; // measured on a laptop CPU with large-v3-turbo
 
+type View = "builder" | "assignment";
+
+const viewFromHash = (): View => (location.hash === "#assignment-2" ? "assignment" : "builder");
+
 const remember = (id: string) => {
   try {
     localStorage.setItem(LAST_KEY, id);
@@ -26,54 +32,6 @@ const remember = (id: string) => {
     /* storage can be blocked; the app works without it */
   }
 };
-
-interface CardProps {
-  id: string;
-  n: number;
-  title: string;
-  hint?: string;
-  children: ReactNode;
-  /** Makes the card collapsible. While collapsed, `summary` replaces the hint and the body is hidden. */
-  collapse?: { collapsed: boolean; summary: string; showLabel: string; onToggle: () => void };
-}
-
-function Card({ id, n, title, hint, children, collapse }: CardProps) {
-  const collapsed = collapse?.collapsed ?? false;
-  return (
-    <section className={`card${collapsed ? " collapsed" : ""}`} id={`step-${id}`} aria-labelledby={`h-${id}`}>
-      <div className="card-head">
-        <span className="badge" aria-hidden>
-          {n}
-        </span>
-        <div className="grow">
-          <h2 id={`h-${id}`}>{title}</h2>
-          {(collapsed ? collapse?.summary : hint) && <p>{collapsed ? collapse?.summary : hint}</p>}
-        </div>
-        {collapse && (
-          <button className={`${collapsed ? "" : "ghost "}sm head-action`} onClick={collapse.onToggle} aria-expanded={!collapsed} aria-controls={`body-${id}`}>
-            {collapsed ? collapse.showLabel : "Hide"}
-          </button>
-        )}
-      </div>
-      {!collapsed && <div id={`body-${id}`}>{children}</div>}
-    </section>
-  );
-}
-
-function Stat({ label, value, unit, note, attn }: { label: string; value: ReactNode; unit?: string; note?: string; attn?: boolean }) {
-  return (
-    <div className={`stat${attn ? " attn" : ""}`}>
-      <span className="stat-label">{label}</span>
-      <span className="stat-value">
-        {value}
-        {unit && <small> {unit}</small>}
-      </span>
-      {note && <span className="stat-note">{note}</span>}
-    </div>
-  );
-}
-
-const goTo = (id: string) => document.getElementById(`step-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 function Hero() {
   return (
@@ -139,8 +97,19 @@ export default function App() {
   const [offline, setOffline] = useState<string | null>(null); // set when the first request to the backend fails
   // Settings and Recordings fold away once there are clips; the user can still open them by hand.
   const [openOverride, setOpenOverride] = useState<Record<string, boolean>>({});
+  const [view, setView] = useState<View>(viewFromHash);
   const pid = project?.id;
   const running = project?.running ?? null;
+  useEffect(() => {
+    const onHash = () => setView(viewFromHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  const switchView = (next: View) => {
+    history.replaceState(null, "", next === "assignment" ? "#assignment-2" : location.pathname + location.search);
+    setView(next);
+    window.scrollTo({ top: 0 });
+  };
   useEffect(() => setOpenOverride({}), [pid]);
 
   const refresh = useCallback(async (id: string) => {
@@ -320,8 +289,16 @@ export default function App() {
             <p>Runs on this computer</p>
           </div>
         </div>
+        <nav className="tabs" aria-label="Pages">
+          <button className={`tab${view === "builder" ? " on" : ""}`} aria-current={view === "builder" ? "page" : undefined} onClick={() => switchView("builder")}>
+            Dataset builder
+          </button>
+          <button className={`tab${view === "assignment" ? " on" : ""}`} aria-current={view === "assignment" ? "page" : undefined} onClick={() => switchView("assignment")}>
+            Assignment 2
+          </button>
+        </nav>
         <div className="topbar-actions">
-          {project && (
+          {project && view === "builder" && (
             <>
               <select aria-label="Project" value={project.id} onChange={(e) => void open(e.target.value)} disabled={running !== null}>
                 {projects.map((p) => (
@@ -343,6 +320,15 @@ export default function App() {
       </div>
     </header>
   );
+
+  if (view === "assignment") {
+    return (
+      <>
+        {header}
+        <AssignmentPage />
+      </>
+    );
+  }
 
   if (!project || !draft) {
     if (offline !== null) {

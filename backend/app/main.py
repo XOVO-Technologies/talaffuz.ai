@@ -15,6 +15,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
+from .assignment.api import make_router
+from .assignment.service import AssignmentService
 from .jobs import JobManager
 from .models import (ClipPatch, ExportRequest, ImportRequest, KeyRequest, ModelRequest, ProcessRequest, Project,
                      ProjectCreate, ProcessingSettings, ReplaceRequest, RomanizeRequest, SourceFile)
@@ -31,7 +33,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 store = ProjectStore(config.PROJECTS_DIR)
-jobs = JobManager(store)
+assignment = AssignmentService(config.DATA_DIR / "assignment", store)
+jobs = JobManager(store, assignment)
 
 
 def _project(pid: str) -> Project:
@@ -288,10 +291,7 @@ def cancel_job(pid: str):
     return {"cancelled": jobs.cancel(pid)}
 
 
-@app.get("/api/projects/{pid}/events")
-async def events(pid: str, request: Request):
-    _project(pid)
-    # A fresh connection only gets new events; EventSource resends Last-Event-ID itself on reconnect.
+def event_stream(pid: str, request: Request) -> StreamingResponse:
     header = request.headers.get("last-event-id")
     last = int(header) if header and header.isdigit() else jobs.latest_seq(pid)
 
@@ -305,13 +305,22 @@ async def events(pid: str, request: Request):
                 last = ev["seq"]
                 yield f"id: {ev['seq']}\ndata: {json.dumps(ev, ensure_ascii=False)}\n\n"
             idle = 0 if fresh else idle + 1
-            if idle >= 30:  # keep proxies from closing a quiet connection
+            if idle >= 30:
                 yield ": keep-alive\n\n"
                 idle = 0
             await asyncio.sleep(0.5)
 
     return StreamingResponse(stream(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/projects/{pid}/events")
+async def events(pid: str, request: Request):
+    _project(pid)
+    return event_stream(pid, request)
+
+
+app.include_router(make_router(assignment, jobs, event_stream))
 
 
 # ---- clips --------------------------------------------------------------

@@ -135,3 +135,108 @@ export interface ReplaceResult {
   clips: number; // clips whose text changes
   places: number;
 }
+
+export interface AssignmentExperience {
+  hours_recording: string;
+  hours_cutting: string;
+  hours_text: string;
+  difficulty: number | null;
+  difficulty_note: string;
+  hardest: string;
+  helpful: string;
+  issues: string;
+  redo: string;
+  learned: string;
+}
+
+export interface AssignmentProfile {
+  name: string;
+  section: "7C" | "7D" | "7F" | "7G" | "7J";
+  roll_no: number | null;
+  gender: "M" | "F";
+  phone_model: string;
+  location: string;
+  date_from: string;
+  date_to: string;
+  source_path: string;
+  total: number;
+  train: number;
+  lowercase_roman: boolean;
+  experience: AssignmentExperience;
+}
+
+export interface AssignmentSourceInfo {
+  folder: string;
+  found: number;
+  used: number;
+  short_by: number;
+  sample_rates: number[];
+  min_seconds: number;
+  max_seconds: number;
+  missing_audio: number;
+  empty_text: number;
+  metadata_file: string;
+}
+
+export interface AssignmentTextSummary {
+  recordings: Record<"ok" | "fixed" | "check" | "bad", number>;
+  sentences: Record<"ok" | "fixed" | "check" | "bad", number>;
+  words: number;
+}
+
+export interface AssignmentCheck {
+  ok: boolean;
+  errors: string[];
+  warnings: string[];
+  counts: Record<string, Record<string, number>>;
+  official: { script: string; output: string; ok: boolean } | null;
+}
+
+export interface AssignmentBuild {
+  seconds: Record<string, number>;
+  counts: Record<string, Record<string, number>>;
+  weak: number[];
+  finished: number;
+}
+
+export interface AssignmentSourceChoice {
+  label: string;
+  path: string;
+}
+
+export interface AssignmentState {
+  profile: AssignmentProfile;
+  id: string | null;
+  missing: string[];
+  device: string;
+  device_name: string;
+  running: string | null;
+  source: AssignmentSourceInfo | null;
+  source_error: string | null;
+  text: AssignmentTextSummary | null;
+  timing: { done: number; total: number; weak: number };
+  build: AssignmentBuild | null;
+  check: AssignmentCheck | null;
+  zip: { name: string; size_mb: number } | null;
+  choices: AssignmentSourceChoice[];
+  official_checker: boolean;
+}
+
+export interface AssignmentProblem {
+  key: string;
+  number: number;
+  scope: "sentence" | "recording";
+  sentence: number | null;
+  status: "bad" | "check" | "fixed";
+  reason: string;
+  urdu: string;
+  roman: string;
+  pairs: [string, string][];
+  urdu_count: number;
+  roman_count: number;
+}
+
+export interface AssignmentProblemList {
+  total: number;
+  items: AssignmentProblem[];
+}

@@ -16,6 +16,7 @@ torchaudio
 silero-vad
 demucs
 faster-whisper
+uroman
 
 # Output + Roman Urdu
 openpyxl

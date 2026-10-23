@@ -13,8 +13,9 @@ log = logging.getLogger("jobs")
 
 
 class JobManager:
-    def __init__(self, store: ProjectStore):
+    def __init__(self, store: ProjectStore, assignment=None):
         self.store = store
+        self.assignment = assignment
         # One worker: the pipeline is CPU/RAM heavy and two parallel jobs would just fight over cores.
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="job")
         self._lock = threading.Lock()
@@ -69,6 +70,12 @@ class JobManager:
                 process.run_process(self.store, pid, emit, cancel, **kwargs)
             elif kind == "romanize":
                 process.run_romanize(self.store, pid, emit, cancel, **kwargs)
+            elif kind == "assignment_timing":
+                self.assignment.run_timing(emit, cancel, **kwargs)
+            elif kind == "assignment_build":
+                self.assignment.run_build(emit, cancel)
+            elif kind == "assignment_check":
+                self.assignment.run_check(emit, cancel)
         except InterruptedError:
             emit("cancelled", "Stopped. Work done so far is kept.")
         except Exception as exc:  # surface the reason in the UI instead of dying silently
