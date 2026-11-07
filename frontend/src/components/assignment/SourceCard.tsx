@@ -1,23 +1,26 @@
 import { useState } from "react";
-import type { AssignmentProfile, AssignmentState } from "../../types";
+import type { AssignmentProfile, AssignmentState, JobEvent } from "../../types";
 import { Stat } from "../Card";
+import { JobProgress } from "../JobProgress";
 import { TextFixPanel } from "./TextFixPanel";
 
 interface Props {
   state: AssignmentState;
   draft: AssignmentProfile;
-  scanning: boolean;
+  event: JobEvent | null;
   version: number;
   disabled: boolean;
   onPath: (path: string) => void;
   onScan: () => void;
+  onStop: () => void;
   onChanged: () => void;
   onError: (message: string) => void;
 }
 
 const OTHER = "__other__";
 
-export function SourceCard({ state, draft, scanning, version, disabled, onPath, onScan, onChanged, onError }: Props) {
+export function SourceCard({ state, draft, event, version, disabled, onPath, onScan, onStop, onChanged, onError }: Props) {
+  const scanning = state.running === "assignment_scan";
   const known = state.choices.find((c) => c.path === draft.source_path || (draft.source_path === "" && c === state.choices[0]));
   const [other, setOther] = useState(!known && draft.source_path !== "");
   const selected = other || !known ? OTHER : known.path;
@@ -63,13 +66,28 @@ export function SourceCard({ state, draft, scanning, version, disabled, onPath, 
             />
           </label>
         )}
-        <button className="primary" disabled={scanning || disabled} onClick={onScan}>
-          {scanning ? "Checking…" : info ? "Check again" : "Check this folder"}
-        </button>
+        {scanning ? (
+          <button className="danger" onClick={onStop}>
+            Stop
+          </button>
+        ) : (
+          <button className="primary" disabled={disabled} onClick={onScan}>
+            {info ? "Check again" : "Check this folder"}
+          </button>
+        )}
       </div>
       <p className="hint source-help">
         The folder holds <code>wavs/</code> and <code>metadata.csv</code> or <code>metadata.xlsx</code>, the files the dataset builder exports. On Colab, paste a path that starts with <code>/content/drive/MyDrive/</code> (a Google Drive web link will not work), after mounting Drive in step 3 of the notebook.
       </p>
+
+      {scanning && (
+        <>
+          <JobProgress running="assignment_scan" event={event} />
+          <p className="hint" style={{ marginTop: 10, maxWidth: "75ch" }}>
+            A folder on Google Drive is slower to read than one on this machine. Copying it to Colab&apos;s own disk first makes this step much faster.
+          </p>
+        </>
+      )}
 
       {state.source_error && (
         <p className="notice bad" role="alert" style={{ marginTop: 16 }}>

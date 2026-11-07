@@ -48,14 +48,8 @@ def make_router(service: AssignmentService, jobs, event_stream: Callable) -> API
         return await run_in_threadpool(snapshot)
 
     @router.post("/scan")
-    async def scan():
-        if jobs.running(KEY):
-            raise HTTPException(409, "Wait for the running job to finish.")
-        try:
-            await run_in_threadpool(service.rescan)
-        except SourceError:
-            pass
-        return await run_in_threadpool(snapshot)
+    def scan():
+        return start("assignment_scan")
 
     @router.get("/problems")
     async def problems(kind: str = "bad", offset: int = 0, limit: int = 10):

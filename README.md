@@ -353,7 +353,7 @@ and `7C_042_M.zip` next to it, in `data/assignment/output/`.
 4. **Experience form.** The seven questions of `EXPERIENCE.md`, answered in your own words.
 5. **Build and check.** Writes 16 kHz mono 16-bit wavs, the six `metadata.csv` files, the README and the form, then checks the folder against the assignment rules and makes the zip.
 
-**Speed.** Word timing is the slow part. On an 8-thread laptop CPU it takes about 25 seconds for each 45 second recording, which is around three and a half hours for 500. On a GPU it is far faster, so the [Colab notebook](#run-it-on-google-colab) is the better place to run it. Build the dataset in the Dataset builder tab first, then open the Assignment 2 tab on the same machine.
+**Speed.** Word timing is the slow part. On an 8-thread laptop CPU it takes about 25 seconds for each 45 second recording, which is around three and a half hours for 500. On a GPU it is far faster, so the [Colab notebook](#run-it-on-google-colab) is the better place to run it. Build the dataset in the Dataset builder tab first, then open the Assignment 2 tab on the same machine. On Colab, copy your dataset from Drive to Colab's disk first (cell 8a of the notebook), since reading hundreds of files from Drive is slow.
 
 **Choices the app makes**
 
@@ -486,6 +486,7 @@ Point the app somewhere else with the `DATASET_DATA_DIR` environment variable. `
 | `ANTHROPIC_API_KEY` | empty | Enables Roman Urdu through the API. You can also paste it in the app. |
 | `ROMANIZE_MODEL` | `claude-haiku-5-5` | The model that writes Roman Urdu. You can also choose it in the app. |
 | `MAX_UPLOAD_GB` | `8` | Largest accepted upload. |
+| `ASSIGNMENT_OUTPUT_DIR` | `data/assignment/output` | Where the Assignment 2 tab writes its folder and zip. The Colab notebook sets it to Colab's own disk, because writing thousands of small files to Google Drive is very slow. |
 
 </details>
 

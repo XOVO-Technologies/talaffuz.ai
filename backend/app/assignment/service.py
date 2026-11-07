@@ -4,6 +4,7 @@ import json
 import threading
 import time
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable
 
@@ -37,13 +38,16 @@ class TextState:
 
 
 class AssignmentService:
-    def __init__(self, root: Path, store) -> None:
+    def __init__(self, root: Path, store, output_dir: Path | None = None) -> None:
         self.root = root
         self.store = store
+        self.output_override = output_dir
+        self.align_memo: dict[str, tuple[str, float, list[tuple[float, float]]]] = {}
         self.lock = threading.RLock()
         self.scan_cache: tuple[str, SourceScan] | None = None
         self.text_cache: tuple[tuple[str, bool], TextState] | None = None
         self.source_error: str | None = None
+        self.source_error_folder: str | None = None
 
     @property
     def profile_path(self) -> Path:
@@ -59,7 +63,7 @@ class AssignmentService:
 
     @property
     def output_dir(self) -> Path:
-        return self.root / "output"
+        return self.output_override or self.root / "output"
 
     @property
     def report_path(self) -> Path:
@@ -110,22 +114,33 @@ class AssignmentService:
         choices = self.choices()
         return Path(choices[0]["path"]) if choices else source.default_folder()
 
-    def scan(self, profile: Profile, force: bool = False) -> SourceScan:
+    def scan(self, profile: Profile, force: bool = False, progress: Callable[[int, int], None] | None = None) -> SourceScan:
+        folder = self.folder(profile)
         with self.lock:
-            folder = self.folder(profile)
-            if not force and self.scan_cache and self.scan_cache[0] == str(folder):
-                return self.scan_cache[1]
-            try:
-                result = source.scan(folder, profile.source_path.strip())
-            except SourceError as exc:
+            cached = self.scan_cache
+            if not force and cached and cached[0] == str(folder):
+                return cached[1]
+        try:
+            result = source.scan(folder, profile.source_path.strip(), progress)
+        except SourceError as exc:
+            with self.lock:
                 self.scan_cache = None
                 self.text_cache = None
                 self.source_error = str(exc)
-                raise
+                self.source_error_folder = str(folder)
+            raise
+        with self.lock:
             self.source_error = None
+            self.source_error_folder = None
             self.scan_cache = (str(folder), result)
             self.text_cache = None
-            return result
+        return result
+
+    def current_scan(self, profile: Profile) -> SourceScan | None:
+        cached = self.scan_cache
+        if cached is not None and cached[0] == str(self.folder(profile)):
+            return cached[1]
+        return None
 
     def texts(self, profile: Profile) -> TextState:
         with self.lock:
@@ -140,7 +155,7 @@ class AssignmentService:
         return list(enumerate(scan.recordings[: profile.total], start=1))
 
     def summary(self, profile: Profile) -> dict | None:
-        if self.text_cache is None and self.scan_cache is None:
+        if self.current_scan(profile) is None:
             return None
         state = self.texts(profile)
         recordings: Counter[str] = Counter()
@@ -161,9 +176,9 @@ class AssignmentService:
         }
 
     def source_info(self, profile: Profile) -> dict | None:
-        if self.scan_cache is None:
+        scan = self.current_scan(profile)
+        if scan is None:
             return None
-        scan = self.scan_cache[1]
         used = min(len(scan.recordings), profile.total)
         return {
             "folder": str(scan.folder),
@@ -181,20 +196,31 @@ class AssignmentService:
     def words_of(self, pair: text.RecordingPair) -> list[str]:
         return [w for sentence in pair.sentences for w in sentence.urdu]
 
+    def stored(self, keys: list[str]) -> dict[str, tuple[str, float, list[tuple[float, float]]]]:
+        present = aligner.names_stored(self.align_dir)
+        fresh = [k for k in keys if k in present and k not in self.align_memo]
+        if fresh:
+            with ThreadPoolExecutor(max_workers=source.READ_WORKERS) as pool:
+                for key, entry in zip(fresh, pool.map(lambda k: aligner.load_entry(self.align_dir, k), fresh)):
+                    if entry is not None:
+                        self.align_memo[key] = entry
+        return {k: self.align_memo[k] for k in keys if k in present and k in self.align_memo}
+
     def timing_state(self, profile: Profile) -> dict:
-        if self.scan_cache is None:
+        if self.current_scan(profile) is None:
             return {"done": 0, "total": 0, "weak": 0}
         state = self.texts(profile)
         done = weak = 0
         used = self.used(profile)
+        stored = self.stored([rec.key for _number, rec in used])
         for _number, rec in used:
             pair = state.pair(rec)
             if pair.problem or not pair.sentences:
                 continue
-            cached = aligner.load_cached(self.align_dir, rec.key, self.words_of(pair))
-            if cached is not None:
+            entry = stored.get(rec.key)
+            if entry is not None and entry[0] == aligner.words_hash(self.words_of(pair)):
                 done += 1
-                weak += cached[1] < WEAK_SCORE
+                weak += entry[1] < WEAK_SCORE
         return {"done": done, "total": len(used), "weak": int(weak)}
 
     def reports(self) -> dict:
@@ -224,11 +250,10 @@ class AssignmentService:
 
     def state(self, running: str | None) -> dict:
         profile = self.profile()
-        info = self.source_info(profile)
-        try:
-            summary = self.summary(profile)
-        except SourceError:
-            summary = None
+        scanning = running == "assignment_scan"
+        info = None if scanning else self.source_info(profile)
+        summary = None if info is None else self.summary(profile)
+        error = self.source_error if self.source_error_folder == str(self.folder(profile)) else None
         reports = self.reports()
         device = transcribe.device_info()
         return {
@@ -239,7 +264,7 @@ class AssignmentService:
             "device_name": device["name"],
             "running": running,
             "source": info,
-            "source_error": self.source_error,
+            "source_error": None if scanning else error,
             "text": summary,
             "timing": self.timing_state(profile) if info else {"done": 0, "total": 0, "weak": 0},
             "build": reports.get("build"),
@@ -249,11 +274,30 @@ class AssignmentService:
             "official_checker": self.official_script() is not None,
         }
 
-    def rescan(self) -> dict:
+    def run_scan(self, emit: Emit, cancel: threading.Event) -> None:
         profile = self.profile()
-        self.scan(profile, force=True)
-        self.texts(profile)
-        return {}
+        emit("scan", "Reading your files", 0.02)
+
+        def reading(done: int, total: int) -> None:
+            if cancel.is_set():
+                raise InterruptedError("cancelled")
+            emit("scan", f"Reading file {done} of {total}", 0.02 + 0.4 * done / total, done=done, total=total)
+
+        try:
+            self.scan(profile, force=True, progress=reading)
+        except SourceError:
+            emit("done", "The folder could not be checked.", 1.0)
+            return
+        state = self.texts(profile)
+        used = self.used(profile)
+        for index, (_number, rec) in enumerate(used, start=1):
+            if cancel.is_set():
+                raise InterruptedError("cancelled")
+            state.pair(rec)
+            if index % 5 == 0 or index == len(used):
+                emit("scan", f"Pairing words: recording {index} of {len(used)}", 0.42 + 0.56 * index / len(used), done=index, total=len(used))
+        self.timing_state(profile)
+        emit("done", "Your folder is ready.", 1.0)
 
     def item(self, profile: Profile, rec: source.SourceRecording, number: int, index: int | None, pair: text.RecordingPair) -> dict | None:
         edits = self.edits().get(rec.key) or {}
@@ -325,12 +369,14 @@ class AssignmentService:
         used = self.used(profile)
         items: list[BuildItem] = []
         todo = []
+        stored = {} if redo else self.stored([rec.key for _number, rec in used])
         for number, rec in used:
             pair = state.pair(rec)
             if pair.problem or not pair.sentences or any(text.sentence_bad(s) for s in pair.sentences):
                 raise RuntimeError(f"Recording R{number:03d} still has a sentence that needs a fix.")
             words = self.words_of(pair)
-            cached = None if redo else aligner.load_cached(self.align_dir, rec.key, words)
+            entry = stored.get(rec.key)
+            cached = (entry[2], entry[1]) if entry is not None and entry[0] == aligner.words_hash(words) else None
             todo.append((number, rec, pair, words, cached))
         missing = sum(1 for t in todo if t[4] is None)
         finished = 0
@@ -342,6 +388,7 @@ class AssignmentService:
                 audio = timing.load_audio(rec.wav)
                 spans, score = aligner.align(audio, words)
                 aligner.save_cached(self.align_dir, rec.key, words, spans, score)
+                self.align_memo[rec.key] = (aligner.words_hash(words), score, spans)
                 cached = (spans, score)
                 finished += 1
             items.append(BuildItem(number, rec.key, rec.wav, pair, cached[0], cached[1]))

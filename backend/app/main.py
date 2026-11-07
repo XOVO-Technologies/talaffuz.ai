@@ -33,7 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 store = ProjectStore(config.PROJECTS_DIR)
-assignment = AssignmentService(config.DATA_DIR / "assignment", store)
+assignment = AssignmentService(config.DATA_DIR / "assignment", store, config.ASSIGNMENT_OUTPUT_DIR)
 jobs = JobManager(store, assignment)
 
 

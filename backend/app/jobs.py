@@ -70,6 +70,8 @@ class JobManager:
                 process.run_process(self.store, pid, emit, cancel, **kwargs)
             elif kind == "romanize":
                 process.run_romanize(self.store, pid, emit, cancel, **kwargs)
+            elif kind == "assignment_scan":
+                self.assignment.run_scan(emit, cancel)
             elif kind == "assignment_timing":
                 self.assignment.run_timing(emit, cancel, **kwargs)
             elif kind == "assignment_build":

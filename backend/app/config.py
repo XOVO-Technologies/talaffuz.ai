@@ -83,6 +83,7 @@ def set_romanize_model(model: str, remember: bool) -> None:
 
 DATA_DIR = Path(os.environ.get("DATASET_DATA_DIR") or ROOT_DIR / "data").resolve()
 PROJECTS_DIR = DATA_DIR / "projects"
+ASSIGNMENT_OUTPUT_DIR = Path(os.environ["ASSIGNMENT_OUTPUT_DIR"]).resolve() if os.environ.get("ASSIGNMENT_OUTPUT_DIR") else None
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 
 MAX_UPLOAD_BYTES = int(float(os.environ.get("MAX_UPLOAD_GB", "8")) * 1024**3)

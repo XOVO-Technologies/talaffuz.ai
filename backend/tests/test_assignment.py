@@ -239,6 +239,11 @@ def wait_idle(client, seconds=60):
     raise AssertionError("job did not finish")
 
 
+def scan_now(client):
+    assert client.post("/api/assignment/scan").json() == {"started": True}
+    return wait_idle(client)
+
+
 def test_api_flow_from_details_to_a_checked_zip(client, tmp_path):
     src = make_source(tmp_path / "src")
     state = client.get("/api/assignment/state").json()
@@ -247,7 +252,7 @@ def test_api_flow_from_details_to_a_checked_zip(client, tmp_path):
     saved = client.put("/api/assignment/profile", json=body).json()
     assert saved["id"] == "7C_042_M" and saved["missing"] == []
 
-    scanned = client.post("/api/assignment/scan").json()
+    scanned = scan_now(client)
     assert scanned["source"]["found"] == 6 and scanned["source"]["short_by"] == 0
     assert scanned["text"]["sentences"]["bad"] == 0
     assert scanned["text"]["sentences"]["fixed"] + scanned["text"]["sentences"]["check"] >= 1
@@ -269,7 +274,7 @@ def test_api_blocks_the_build_until_details_are_complete(client, tmp_path):
     src = make_source(tmp_path / "src")
     body = profile(source_path=str(src), name="").model_dump()
     client.put("/api/assignment/profile", json=body)
-    client.post("/api/assignment/scan")
+    scan_now(client)
     client.post("/api/assignment/build")
     state = wait_idle(client)
     assert state["zip"] is None and state["build"] is None
@@ -282,13 +287,13 @@ def test_edit_a_broken_sentence_through_the_api(client, tmp_path):
     lines[0] = lines[0].split("|")[0] + "|آج موسم بہت اچھا ہے۔ ہم کل جائیں گے۔|Aaj mausam bohat. Hum kal jayenge."
     (src / "metadata.csv").write_text("\n".join(lines) + "\n", encoding="utf-8")
     client.put("/api/assignment/profile", json=profile(source_path=str(src)).model_dump())
-    state = client.post("/api/assignment/scan").json()
+    state = scan_now(client)
     assert state["text"]["sentences"]["bad"] == 1
     bad = client.get("/api/assignment/problems", params={"kind": "bad"}).json()["items"][0]
     assert bad["sentence"] == 0 and bad["urdu_count"] == 5 and bad["roman_count"] == 3
     fixed = client.put("/api/assignment/edit", json={"key": bad["key"], "sentence": 0, "urdu": bad["urdu"], "roman": "aaj mausam bohat acha hai"}).json()
     assert fixed.get("removed") or fixed["status"] != "bad"
-    assert client.post("/api/assignment/scan").json()["text"]["sentences"]["bad"] == 0
+    assert scan_now(client)["text"]["sentences"]["bad"] == 0
 
 
 def test_official_checker_runs_next_to_the_zip_and_is_cleaned_up(tmp_path, monkeypatch):
@@ -323,6 +328,96 @@ def test_readme_and_experience_follow_the_teacher_sample_layout(tmp_path, monkey
 def test_a_drive_web_link_gets_a_clear_message(client, tmp_path):
     link = "https://drive.google.com/drive/folders/1Ji4E8c5OK_xVZ8NDfEm9qygGz9nUrQT9"
     client.put("/api/assignment/profile", json=profile(source_path=link).model_dump())
-    state = client.post("/api/assignment/scan").json()
+    state = scan_now(client)
     assert state["source"] is None
     assert "web link" in state["source_error"] and "/content/drive/MyDrive" in state["source_error"]
+
+
+class EmptyStore:
+    def list(self):
+        return []
+
+
+def test_scan_skips_missing_wavs_and_names_an_unreadable_one(tmp_path):
+    from app.assignment import source
+
+    src = make_source(tmp_path / "src")
+    (src / "wavs" / "urdu_000002.wav").unlink()
+    scan = source.scan(src)
+    assert len(scan.recordings) == 5 and scan.missing_audio == ["urdu_000002.wav"]
+    assert scan.sample_rates == [22050] and len(scan.durations) == 5
+    (src / "wavs" / "urdu_000003.wav").write_bytes(b"not audio at all")
+    with pytest.raises(source.SourceError) as caught:
+        source.scan(src)
+    assert "urdu_000003.wav" in str(caught.value)
+
+
+def test_timing_state_reads_each_cache_file_once_and_ignores_stale_ones(tmp_path, monkeypatch):
+    from app.assignment.service import AssignmentService
+
+    src = make_source(tmp_path / "src")
+    svc = AssignmentService(tmp_path / "root", EmptyStore())
+    svc.save_profile(profile(source_path=str(src)))
+    svc.scan(svc.profile(), force=True)
+    current = svc.profile()
+    state = svc.texts(current)
+    used = svc.used(current)
+    for number, rec in used:
+        words = svc.words_of(state.pair(rec))
+        if number == 1:
+            words = words + ["extra"]
+        aligner.save_cached(svc.align_dir, rec.key, words, [(0.1, 0.2)] * len(words), 0.9)
+    reads = []
+    real = aligner.load_entry
+    monkeypatch.setattr(aligner, "load_entry", lambda folder, key: reads.append(key) or real(folder, key))
+    assert svc.timing_state(current)["done"] == 5
+    assert len(reads) == 6
+    assert svc.timing_state(current)["done"] == 5
+    assert len(reads) == 6
+
+
+def test_output_folder_can_be_moved_off_the_data_folder(tmp_path):
+    from app.assignment.service import AssignmentService
+
+    default = AssignmentService(tmp_path / "root", EmptyStore())
+    moved = AssignmentService(tmp_path / "root", EmptyStore(), tmp_path / "local")
+    assert default.output_dir == tmp_path / "root" / "output"
+    assert moved.output_dir == tmp_path / "local"
+
+
+def test_a_stale_scan_or_error_is_hidden_after_the_folder_changes(client, tmp_path):
+    first = make_source(tmp_path / "first")
+    client.put("/api/assignment/profile", json=profile(source_path=str(first)).model_dump())
+    ready = scan_now(client)
+    assert ready["source"]["found"] == 6 and ready["text"] is not None
+    elsewhere = tmp_path / "nowhere"
+    client.put("/api/assignment/profile", json=profile(source_path=str(elsewhere)).model_dump())
+    changed = client.get("/api/assignment/state").json()
+    assert changed["source"] is None and changed["text"] is None and changed["source_error"] is None
+    failed = scan_now(client)
+    assert failed["source"] is None and "not found" in failed["source_error"].lower()
+    client.put("/api/assignment/profile", json=profile(source_path=str(first)).model_dump())
+    back = client.get("/api/assignment/state").json()
+    assert back["source_error"] is None
+
+
+def test_scan_job_reports_progress_and_can_be_stopped(client, tmp_path):
+    from app.assignment import source
+
+    src = make_source(tmp_path / "src")
+    client.put("/api/assignment/profile", json=profile(source_path=str(src)).model_dump())
+    seen = []
+    real = source.scan
+
+    def watching(folder, raw="", progress=None):
+        return real(folder, raw, lambda done, total: (seen.append((done, total)), progress and progress(done, total)))
+
+    import app.assignment.service as service_module
+
+    service_module.source.scan = watching
+    try:
+        ready = scan_now(client)
+    finally:
+        service_module.source.scan = real
+    assert seen and seen[-1] == (6, 6)
+    assert ready["source"]["found"] == 6

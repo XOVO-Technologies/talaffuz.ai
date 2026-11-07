@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import threading
 from pathlib import Path
@@ -63,17 +64,19 @@ def cache_file(folder: Path, key: str) -> Path:
     return folder / f"{key}.json"
 
 
-def load_cached(folder: Path, key: str, words: list[str]) -> tuple[list[tuple[float, float]], float] | None:
-    path = cache_file(folder, key)
-    if not path.is_file():
-        return None
+def names_stored(folder: Path) -> set[str]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        return {name[:-5] for name in os.listdir(folder) if name.endswith(".json")}
+    except OSError:
+        return set()
+
+
+def load_entry(folder: Path, key: str) -> tuple[str, float, list[tuple[float, float]]] | None:
+    try:
+        data = json.loads(cache_file(folder, key).read_text(encoding="utf-8"))
+        return data["hash"], float(data.get("score", 0.0)), [(s, e) for s, e in data["spans"]]
+    except (OSError, ValueError, KeyError):
         return None
-    if data.get("hash") != words_hash(words) or len(data.get("spans", [])) != len(words):
-        return None
-    return [(s, e) for s, e in data["spans"]], float(data.get("score", 0.0))
 
 
 def save_cached(folder: Path, key: str, words: list[str], spans: list[tuple[float, float]], score: float) -> None:

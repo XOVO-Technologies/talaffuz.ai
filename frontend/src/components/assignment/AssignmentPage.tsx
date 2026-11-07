@@ -27,7 +27,6 @@ export function AssignmentPage() {
   const [event, setEvent] = useState<JobEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
   const [version, setVersion] = useState(0);
   const scanned = useRef(false);
   const saved = useRef<AssignmentProfile | null>(null);
@@ -50,21 +49,18 @@ export function AssignmentPage() {
   }, []);
 
   const scan = useCallback(async () => {
-    setScanning(true);
     setError(null);
     try {
       if (draft && !same(draft, saved.current)) {
         saved.current = draft;
         await api.assignmentSaveProfile(draft);
       }
-      setState(await api.assignmentScan());
-      setVersion((v) => v + 1);
+      await api.assignmentScan();
+      await refresh();
     } catch (e) {
       setError((e as Error).message);
-    } finally {
-      setScanning(false);
     }
-  }, [draft]);
+  }, [draft, refresh]);
 
   useEffect(() => {
     if (!state || scanned.current || state.source || state.source_error || state.running) return;
@@ -75,6 +71,7 @@ export function AssignmentPage() {
   useEffect(() => {
     if (!draft || same(draft, saved.current)) return;
     const timer = setTimeout(() => {
+      if (same(draft, saved.current)) return;
       saved.current = draft;
       api
         .assignmentSaveProfile(draft)
@@ -90,6 +87,7 @@ export function AssignmentPage() {
       const ev: JobEvent = JSON.parse(m.data);
       setEvent(ev);
       if (["done", "error", "cancelled", "started"].includes(ev.stage)) void refresh();
+      if (ev.stage === "done") setVersion((v) => v + 1);
       if (ev.stage === "error") setError(ev.message);
     };
     return () => source.close();
@@ -248,11 +246,12 @@ export function AssignmentPage() {
             <SourceCard
               state={state}
               draft={draft}
-              scanning={scanning}
+              event={event}
               version={version}
               disabled={busy}
               onPath={(path) => setDraft({ ...draft, source_path: path })}
               onScan={() => void scan()}
+              onStop={() => void stop()}
               onChanged={() => void refresh()}
               onError={setError}
             />

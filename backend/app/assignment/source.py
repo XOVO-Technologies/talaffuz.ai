@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 import soundfile as sf
 
 from .. import config
 
 NUMBERED = re.compile(r"(\d+)")
+READ_WORKERS = 16
 
 
 @dataclass
@@ -85,6 +89,14 @@ def read_rows(folder: Path, base: Path) -> tuple[list[tuple[str, str, str]], str
     return rows, xlsx_path.name
 
 
+def read_header(rec: SourceRecording) -> tuple[int, float]:
+    try:
+        info = sf.info(str(rec.wav))
+    except RuntimeError as exc:
+        raise SourceError(f"{rec.wav.name} could not be read as audio: {exc}")
+    return info.samplerate, info.frames / info.samplerate
+
+
 def explain_missing(raw: str, folder: Path) -> str:
     if "://" in raw or raw.lower().startswith("drive.google.com"):
         return (
@@ -97,28 +109,32 @@ def explain_missing(raw: str, folder: Path) -> str:
     return f"Folder not found: {folder}"
 
 
-def scan(folder: Path, raw: str = "") -> SourceScan:
+def scan(folder: Path, raw: str = "", progress: Callable[[int, int], None] | None = None) -> SourceScan:
     if not folder.is_dir():
         raise SourceError(explain_missing(raw or str(folder), folder))
     base, wavs = find_layout(folder)
     rows, metadata_file = read_rows(folder, base)
     rows.sort(key=lambda row: natural_key(row[0]))
+    listed = set(os.listdir(wavs))
     recordings: list[SourceRecording] = []
-    rates: set[int] = set()
-    durations: list[float] = []
     missing: list[str] = []
     empty: list[str] = []
     for name, urdu, roman in rows:
         path = wavs / name
-        if not path.is_file():
+        if name not in listed and not path.is_file():
             missing.append(name)
             continue
-        info = sf.info(str(path))
-        rates.add(info.samplerate)
-        durations.append(info.frames / info.samplerate)
         if not urdu.strip() or not roman.strip():
             empty.append(name)
         recordings.append(SourceRecording(key=Path(name).stem, wav=path, urdu=urdu, roman=roman))
     if not recordings:
         raise SourceError("The metadata file has no rows that match a wav in the wavs folder.")
-    return SourceScan(folder, recordings, sorted(rates), durations, missing, empty, metadata_file)
+    headers: list[tuple[int, float]] = []
+    with ThreadPoolExecutor(max_workers=READ_WORKERS) as pool:
+        for index, header in enumerate(pool.map(read_header, recordings), start=1):
+            headers.append(header)
+            if progress is not None and (index % 10 == 0 or index == len(recordings)):
+                progress(index, len(recordings))
+    rates = sorted({rate for rate, _ in headers})
+    durations = [seconds for _, seconds in headers]
+    return SourceScan(folder, recordings, rates, durations, missing, empty, metadata_file)

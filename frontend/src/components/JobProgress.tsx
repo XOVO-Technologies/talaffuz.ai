@@ -6,6 +6,7 @@ import { ProgressBar } from "./ProgressBar";
 const TITLES: Record<string, string> = {
   process: "Cleaning and transcribing",
   romanize: "Writing Roman Urdu",
+  assignment_scan: "Checking your folder",
   assignment_timing: "Finding word timings",
   assignment_build: "Building the dataset",
   assignment_check: "Checking the dataset",
